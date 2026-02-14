@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "equipment-thumb",
+      "description": "Defense equipment thumbnail placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1615328847645-e22e9f229a9b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bWlsaXRhcnklMjBlcXVpcG1lbnR8ZW58MHx8fHwxNzcxMDg1NjA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "military equipment"
+    }
+  ]
 }
