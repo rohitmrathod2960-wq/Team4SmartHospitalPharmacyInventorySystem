@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -10,8 +11,9 @@ import {
   ArrowDownLeft, 
   ArrowUpRight,
   Filter,
+  AlertCircle,
   MoreVertical,
-  AlertCircle
+  History
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +39,8 @@ import {
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Equipment } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 const INITIAL_EQUIPMENT: Equipment[] = [
   { id: '1', equipmentName: 'M1 Abrams Optic', category: 'Heavy Machinery', serialNumber: 'SN-90210', quantity: 12, minStockLevelLevel: 5, status: 'Available', createdAt: '2023-10-01' },
@@ -103,10 +107,12 @@ export default function InventoryPage() {
           <p className="text-muted-foreground mt-1">Manage global assets, adjust stock levels, and monitor status.</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="rounded-xl border-dashed">
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-          </Button>
+          <Link href="/dashboard/admin/transactions">
+            <Button variant="outline" className="rounded-xl border-dashed">
+              <History className="w-4 h-4 mr-2" />
+              Audit Logs
+            </Button>
+          </Link>
           <Button className="rounded-xl shadow-lg shadow-primary/25">
             <Plus className="w-4 h-4 mr-2" />
             New Equipment
@@ -217,7 +223,7 @@ export default function InventoryPage() {
                   <TableCell className="pr-6 text-right space-x-2">
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="rounded-lg h-8" onClick={() => setSelectedItem(item)}>
+                        <Button variant="outline" size="sm" className="rounded-lg h-8 border-emerald-200 hover:bg-emerald-50" onClick={() => setSelectedItem(item)}>
                           <Plus className="w-3.5 h-3.5 mr-1 text-emerald-600" />
                           Stock In
                         </Button>
@@ -248,14 +254,14 @@ export default function InventoryPage() {
                           </div>
                         </div>
                         <DialogFooter>
-                          <Button onClick={() => handleStockAction('IN')}>Confirm Stock In</Button>
+                          <Button onClick={() => handleStockAction('IN')} className="w-full">Confirm Stock In</Button>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
 
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="rounded-lg h-8" onClick={() => setSelectedItem(item)}>
+                        <Button variant="outline" size="sm" className="rounded-lg h-8 border-red-200 hover:bg-red-50" onClick={() => setSelectedItem(item)}>
                           <Minus className="w-3.5 h-3.5 mr-1 text-red-600" />
                           Stock Out
                         </Button>
@@ -286,7 +292,7 @@ export default function InventoryPage() {
                           </div>
                         </div>
                         <DialogFooter>
-                          <Button variant="destructive" onClick={() => handleStockAction('OUT')}>Confirm Stock Out</Button>
+                          <Button variant="destructive" onClick={() => handleStockAction('OUT')} className="w-full">Confirm Stock Out</Button>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
