@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Wrench, Sparkles, Calendar, CheckCircle2, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from "@/components/ui/badge";
 
 export default function MaintenancePage() {
   const [loading, setLoading] = useState(false);

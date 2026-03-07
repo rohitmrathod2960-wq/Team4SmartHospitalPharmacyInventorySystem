@@ -19,6 +19,7 @@ export default function CategoryPage() {
     fetchData();
   }, []);
 
+  // Add Category
   const handleAdd = async () => {
     if (!name) return;
 
@@ -33,44 +34,120 @@ export default function CategoryPage() {
     fetchData();
   };
 
+  // Delete Category
   const handleDelete = async (id: string) => {
     await deleteDoc(doc(db, "categories", id));
+    fetchData();
+  };
+
+  // Add Defence Sample Categories
+  const addDefaultCategories = async () => {
+    const data = [
+      { name: "Vehicles", description: "Military transport and combat vehicles" },
+      { name: "Optics", description: "Night vision, binoculars, scopes" },
+      { name: "Communication", description: "Military communication devices" },
+      { name: "Armor", description: "Body armor, helmets, protective gear" },
+      { name: "UAV", description: "Unmanned aerial vehicles and drones" },
+      { name: "Weapons Support", description: "Weapon maintenance and support equipment" }
+    ];
+
+    for (let item of data) {
+      await addDoc(collection(db, "categories"), {
+        ...item,
+        createdAt: new Date()
+      });
+    }
+
     fetchData();
   };
 
   return (
     <ManagerGuard>
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Category Management</h1>
 
-        <div className="flex gap-3">
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="Name" className="border p-2 rounded"/>
-          <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Description" className="border p-2 rounded"/>
-          <button onClick={handleAdd} className="bg-blue-600 text-white px-4 rounded">Add</button>
+        <h1 className="text-3xl font-bold">
+          Defence Equipment Categories
+        </h1>
+
+        {/* Add Category */}
+        <div className="flex gap-3 bg-white p-4 rounded-lg shadow">
+          <input
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="Category Name"
+            className="border p-2 rounded w-1/4"
+          />
+
+          <input
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            placeholder="Description"
+            className="border p-2 rounded w-1/2"
+          />
+
+          <button
+            onClick={handleAdd}
+            className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700"
+          >
+            Add Category
+          </button>
+
+          <button
+            onClick={addDefaultCategories}
+            className="bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700"
+          >
+            Load Defence Categories
+          </button>
         </div>
 
-        <table className="w-full bg-white rounded-lg">
-          <thead className="bg-blue-600 text-white">
-            <tr>
-              <th className="p-2">Name</th>
-              <th>Description</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {categories.map(cat => (
-              <tr key={cat.id} className="border-b">
-                <td className="p-2">{cat.name}</td>
-                <td>{cat.description}</td>
-                <td>
-                  <button onClick={() => handleDelete(cat.id)} className="bg-red-500 text-white px-2 rounded">
-                    Delete
-                  </button>
-                </td>
+        {/* Category Table */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full">
+
+            <thead className="bg-blue-600 text-white">
+              <tr>
+                <th className="p-3 text-left">Category Name</th>
+                <th className="text-left">Description</th>
+                <th className="text-center">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {categories.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="text-center p-6 text-gray-500">
+                    No categories found. Add one or load defence categories.
+                  </td>
+                </tr>
+              ) : (
+                categories.map(cat => (
+                  <tr key={cat.id} className="border-b hover:bg-gray-50">
+
+                    <td className="p-3 font-medium">
+                      {cat.name}
+                    </td>
+
+                    <td>
+                      {cat.description}
+                    </td>
+
+                    <td className="text-center">
+                      <button
+                        onClick={() => handleDelete(cat.id)}
+                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
+                    </td>
+
+                  </tr>
+                ))
+              )}
+            </tbody>
+
+          </table>
+        </div>
+
       </div>
     </ManagerGuard>
   );

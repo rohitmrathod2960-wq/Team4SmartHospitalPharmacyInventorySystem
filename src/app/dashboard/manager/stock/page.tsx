@@ -1,169 +1,196 @@
-
 "use client";
 
-import { useState } from 'react';
-import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
-import { 
-  Package, 
-  Search, 
-  Plus, 
-  Minus, 
-  ArrowDownLeft, 
-  ArrowUpRight,
-  Filter,
-  AlertCircle,
-  History
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { Equipment } from '@/lib/types';
-import { cn } from '@/lib/utils';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import {
+  collection,
+  getDocs,
+  updateDoc,
+  doc,
+  addDoc
+} from "firebase/firestore";
 
-const INITIAL_EQUIPMENT: Equipment[] = [
-  { id: '1', equipmentName: 'M1 Abrams Optic', category: 'Heavy Machinery', serialNumber: 'SN-90210', quantity: 12, minStockLevelLevel: 5, status: 'Available', createdAt: '2023-10-01' },
-  { id: '2', equipmentName: 'Tactical Drone v4', category: 'UAV', serialNumber: 'DR-4421', quantity: 3, minStockLevelLevel: 5, status: 'Low Stock', createdAt: '2023-11-15' },
-  { id: '3', equipmentName: 'Encrypted Radio RT-1', category: 'Communication', serialNumber: 'RAD-551', quantity: 45, minStockLevelLevel: 10, status: 'Available', createdAt: '2023-09-20' },
-  { id: '5', equipmentName: 'Night Vision Goggles Gen 3', category: 'Optics', serialNumber: 'NVG-102', quantity: 8, minStockLevelLevel: 10, status: 'Low Stock', createdAt: '2023-12-01' },
-];
+import { db } from "@/lib/firebase";
+import ManagerGuard from "@/components/dashboard/ManagerGuard";
 
-export default function ManagerInventoryPage() {
-  const [equipment, setEquipment] = useState<Equipment[]>(INITIAL_EQUIPMENT);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedItem, setSelectedItem] = useState<Equipment | null>(null);
-  const [transactionQty, setTransactionQty] = useState(1);
-  const { toast } = useToast();
+export default function StockPage() {
 
-  const filteredEquipment = equipment.filter(item => 
-    item.equipmentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [products, setProducts] = useState<any[]>([]);
 
-  const handleStockAction = (type: 'IN' | 'OUT') => {
-    if (!selectedItem) return;
-    const qtyChange = type === 'IN' ? transactionQty : -transactionQty;
-    const newQty = selectedItem.quantity + qtyChange;
-    if (newQty < 0) {
-      toast({ variant: "destructive", title: "Invalid Quantity", description: "Stock cannot fall below zero." });
+  const fetchProducts = async () => {
+
+    const snap = await getDocs(collection(db, "products"));
+
+    setProducts(
+      snap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }))
+    );
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // STOCK IN
+  const stockIn = async (product: any) => {
+
+    const qty = Number(prompt("Enter quantity to add"));
+
+    if (!qty || qty <= 0) return;
+
+    const newQty = product.quantity + qty;
+
+    await updateDoc(doc(db, "products", product.id), {
+      quantity: newQty
+    });
+
+    await addDoc(collection(db, "transactions"), {
+      productId: product.id,
+      productName: product.name,
+      type: "IN",
+      quantity: qty,
+      timestamp: new Date()
+    });
+
+    fetchProducts();
+  };
+
+  // STOCK OUT
+  const stockOut = async (product: any) => {
+
+    const qty = Number(prompt("Enter quantity to remove"));
+
+    if (!qty || qty <= 0) return;
+
+    if (qty > product.quantity) {
+      alert("Not enough stock");
       return;
     }
-    const updatedEquipment = equipment.map(item => {
-      if (item.id === selectedItem.id) {
-        const status = newQty <= item.minStockLevelLevel ? 'Low Stock' : 'Available';
-        return { ...item, quantity: newQty, status: status as any };
-      }
-      return item;
+
+    const newQty = product.quantity - qty;
+
+    await updateDoc(doc(db, "products", product.id), {
+      quantity: newQty
     });
-    setEquipment(updatedEquipment);
-    toast({ title: `Stock Updated`, description: `Successfully adjusted ${selectedItem.equipmentName}.` });
-    setSelectedItem(null);
+
+    await addDoc(collection(db, "transactions"), {
+      productId: product.id,
+      productName: product.name,
+      type: "OUT",
+      quantity: qty,
+      timestamp: new Date()
+    });
+
+    fetchProducts();
   };
 
   return (
-    <DashboardLayout role="manager" title="Inventory Control">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Stock Management</h1>
-          <p className="text-muted-foreground">Adjust quantities and track resource availability.</p>
+
+    <ManagerGuard>
+
+      <div className="space-y-6">
+
+        <h1 className="text-3xl font-bold">
+          Stock Management
+        </h1>
+
+        <div className="bg-white rounded-xl shadow overflow-hidden">
+
+          <table className="w-full">
+
+            <thead className="bg-blue-600 text-white">
+
+              <tr>
+                <th className="p-3 text-left">Equipment</th>
+                <th className="text-left">Available</th>
+                <th>Status</th>
+                <th className="text-center">Actions</th>
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {products.length === 0 ? (
+
+                <tr>
+                  <td colSpan={4} className="text-center p-6 text-gray-500">
+                    No equipment found. Add products first.
+                  </td>
+                </tr>
+
+              ) : (
+
+                products.map(product => {
+
+                  const lowStock =
+                    product.quantity <= product.lowStockThreshold;
+
+                  return (
+
+                    <tr key={product.id} className="border-b hover:bg-gray-50">
+
+                      <td className="p-3 font-medium">
+                        {product.name}
+                      </td>
+
+                      <td>
+                        {product.quantity}
+                      </td>
+
+                      <td>
+
+                        {lowStock ? (
+
+                          <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm">
+                            Low Stock
+                          </span>
+
+                        ) : (
+
+                          <span className="bg-purple-500 text-white px-3 py-1 rounded-full text-sm">
+                            Available
+                          </span>
+
+                        )}
+
+                      </td>
+
+                      <td className="flex gap-2 justify-center p-2">
+
+                        <button
+                          onClick={() => stockIn(product)}
+                          className="bg-green-600 text-white px-3 py-1 rounded"
+                        >
+                          + Stock In
+                        </button>
+
+                        <button
+                          onClick={() => stockOut(product)}
+                          className="bg-red-500 text-white px-3 py-1 rounded"
+                        >
+                          - Stock Out
+                        </button>
+
+                      </td>
+
+                    </tr>
+
+                  );
+                })
+
+              )}
+
+            </tbody>
+
+          </table>
+
         </div>
-        <Link href="/dashboard/manager/transactions">
-          <Button variant="outline" className="rounded-xl">
-            <History className="w-4 h-4 mr-2" />
-            Stock Movements
-          </Button>
-        </Link>
+
       </div>
 
-      <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
-        <CardHeader className="bg-muted/30">
-          <div className="flex items-center justify-between gap-4">
-            <CardTitle>Equipment List</CardTitle>
-            <div className="relative w-72">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search equipment..." 
-                className="pl-10 rounded-xl"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="pl-6 font-bold">Equipment</TableHead>
-                <TableHead className="font-bold text-center">Available</TableHead>
-                <TableHead className="font-bold">Status</TableHead>
-                <TableHead className="pr-6 text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredEquipment.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="pl-6 py-4 font-medium">{item.equipmentName}</TableCell>
-                  <TableCell className="text-center font-bold">{item.quantity}</TableCell>
-                  <TableCell>
-                    <Badge variant={item.status === 'Available' ? 'secondary' : 'destructive'} className="rounded-md">
-                      {item.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="pr-6 text-right space-x-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="rounded-lg h-8" onClick={() => setSelectedItem(item)}>
-                          <Plus className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-                          Stock In
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader><DialogTitle>Stock In</DialogTitle></DialogHeader>
-                        <Input type="number" value={transactionQty} onChange={e => setTransactionQty(parseInt(e.target.value) || 0)} />
-                        <Button onClick={() => handleStockAction('IN')} className="w-full">Update</Button>
-                      </DialogContent>
-                    </Dialog>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="rounded-lg h-8" onClick={() => setSelectedItem(item)}>
-                          <Minus className="w-3.5 h-3.5 mr-1 text-red-600" />
-                          Stock Out
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader><DialogTitle>Stock Out</DialogTitle></DialogHeader>
-                        <Input type="number" value={transactionQty} onChange={e => setTransactionQty(parseInt(e.target.value) || 0)} />
-                        <Button variant="destructive" onClick={() => handleStockAction('OUT')} className="w-full">Update</Button>
-                      </DialogContent>
-                    </Dialog>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </DashboardLayout>
+    </ManagerGuard>
+
   );
 }
