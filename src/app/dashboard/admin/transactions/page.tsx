@@ -64,12 +64,12 @@ export default function TransactionsPage() {
         </CardHeader>
 
         <CardContent>
-          <button
+          {/* <button
   onClick={addTestTransaction}
   className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
 >
   Add Test Transaction
-</button>
+</button> */}
           <Table>
             <TableHeader>
               <TableRow className="bg-blue-700 hover:bg-blue-700">

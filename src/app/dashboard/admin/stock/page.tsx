@@ -47,7 +47,66 @@ const MOCK_STOCK = [
 export default function StockManagementPage() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("ALL");
-  const [data] = useState(MOCK_STOCK);
+  const [data, setData] = useState(MOCK_STOCK);
+
+  /* ============================= */
+  /*         STOCK IN FUNCTION     */
+  /* ============================= */
+
+  const handleStockIn = () => {
+    if (!search) {
+      alert("Search equipment name first");
+      return;
+    }
+
+    const itemIndex = data.findIndex((item) =>
+      item.name.toLowerCase().includes(search.toLowerCase())
+    );
+
+    if (itemIndex === -1) {
+      alert("Item not found");
+      return;
+    }
+
+    const updated = [...data];
+    updated[itemIndex].quantity += 1;
+    updated[itemIndex].type = "IN";
+    updated[itemIndex].date = new Date().toISOString().split("T")[0];
+
+    setData(updated);
+  };
+
+  /* ============================= */
+  /*        STOCK OUT FUNCTION     */
+  /* ============================= */
+
+  const handleStockOut = () => {
+    if (!search) {
+      alert("Search equipment name first");
+      return;
+    }
+
+    const itemIndex = data.findIndex((item) =>
+      item.name.toLowerCase().includes(search.toLowerCase())
+    );
+
+    if (itemIndex === -1) {
+      alert("Item not found");
+      return;
+    }
+
+    if (data[itemIndex].quantity <= 0) {
+      alert("Stock cannot go below 0");
+      return;
+    }
+
+    const updated = [...data];
+    updated[itemIndex].quantity -= 1;
+    updated[itemIndex].type = "OUT";
+    updated[itemIndex].date = new Date().toISOString().split("T")[0];
+
+    setData(updated);
+  };
 
   /* ============================= */
   /*         FILTER LOGIC          */
@@ -64,9 +123,6 @@ export default function StockManagementPage() {
   return (
     <div className="space-y-8 bg-slate-100 min-h-screen p-6">
       <Card className="shadow-xl rounded-2xl border-none bg-white">
-        {/* ============================= */}
-        {/*            HEADER              */}
-        {/* ============================= */}
 
         <CardHeader className="pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <CardTitle className="text-2xl font-bold text-blue-800">
@@ -74,7 +130,7 @@ export default function StockManagementPage() {
           </CardTitle>
 
           <div className="flex flex-wrap gap-4 items-end">
-            {/* Search */}
+
             <div className="flex flex-col">
               <label className="text-sm font-semibold mb-1">
                 Search Equipment
@@ -87,7 +143,6 @@ export default function StockManagementPage() {
               />
             </div>
 
-            {/* Filter */}
             <div className="flex flex-col">
               <label className="text-sm font-semibold mb-1">
                 Transaction Type
@@ -103,20 +158,22 @@ export default function StockManagementPage() {
               </select>
             </div>
 
-            {/* Buttons */}
-            <Button className="bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold">
+            <Button
+              onClick={handleStockIn}
+              className="bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
+            >
               + Stock In
             </Button>
 
-            <Button className="bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold">
+            <Button
+              onClick={handleStockOut}
+              className="bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold"
+            >
               - Stock Out
             </Button>
+
           </div>
         </CardHeader>
-
-        {/* ============================= */}
-        {/*            TABLE               */}
-        {/* ============================= */}
 
         <CardContent>
           <div className="overflow-x-auto rounded-xl mt-4">
@@ -167,7 +224,6 @@ export default function StockManagementPage() {
                       <TableCell>{item.category}</TableCell>
                       <TableCell>{item.quantity}</TableCell>
 
-                      {/* Type Badge */}
                       <TableCell>
                         {item.type === "IN" ? (
                           <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
@@ -188,6 +244,7 @@ export default function StockManagementPage() {
             </Table>
           </div>
         </CardContent>
+
       </Card>
     </div>
   );

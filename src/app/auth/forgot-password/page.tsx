@@ -19,39 +19,124 @@ export default function ForgotPasswordPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleSendOTP = (e: React.FormEvent) => {
+  /* ============================= */
+  /*        STEP 1: SEND OTP       */
+  /* ============================= */
+
+  const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setStep('otp');
+
+    if (!email) {
       toast({
-        title: "OTP Sent",
-        description: "A 6-digit verification code has been sent to your email (Simulated: 123456)",
+        variant: "destructive",
+        title: "Email Required",
+        description: "Please enter your email address.",
       });
-    }, 1500);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/send-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setStep('otp');
+        toast({
+          title: "OTP Sent",
+          description: "A 6-digit verification code has been sent to your email.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.error || "Failed to send OTP",
+        });
+      }
+
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Server Error",
+        description: "Something went wrong. Try again.",
+      });
+    }
+
+    setLoading(false);
   };
 
-  const handleVerifyOTP = (e: React.FormEvent) => {
+  /* ============================= */
+  /*        STEP 2: VERIFY OTP     */
+  /* ============================= */
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      if (otp === '123456') {
+
+    try {
+      const res = await fetch("/api/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
         setStep('reset');
+        toast({
+          title: "OTP Verified",
+          description: "You may now reset your password.",
+        });
       } else {
         toast({
           variant: "destructive",
           title: "Invalid OTP",
-          description: "Please check the code and try again.",
+          description: data.error || "Incorrect code",
         });
       }
-    }, 1000);
+
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Verification Failed",
+        description: "Please try again.",
+      });
+    }
+
+    setLoading(false);
   };
 
-  const handleResetPassword = (e: React.FormEvent) => {
+  /* ============================= */
+  /*      STEP 3: RESET PASSWORD   */
+  /* ============================= */
+
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!newPassword) {
+      toast({
+        variant: "destructive",
+        title: "Password Required",
+        description: "Enter a new password.",
+      });
+      return;
+    }
+
     setLoading(true);
+
+    // You can later connect this to Firebase Auth password update
+
     setTimeout(() => {
       setLoading(false);
       toast({
@@ -59,7 +144,7 @@ export default function ForgotPasswordPage() {
         description: "Your password has been updated successfully.",
       });
       router.push('/auth/signin');
-    }, 1500);
+    }, 1000);
   };
 
   return (
@@ -80,6 +165,7 @@ export default function ForgotPasswordPage() {
             {step === 'reset' && "Enter your new secure password"}
           </CardDescription>
         </CardHeader>
+
         <CardContent className="px-8 pb-8">
           {step === 'email' && (
             <form onSubmit={handleSendOTP} className="space-y-6">
@@ -98,8 +184,9 @@ export default function ForgotPasswordPage() {
                   />
                 </div>
               </div>
+
               <Button type="submit" className="w-full h-11 bg-primary rounded-xl" disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Send OTP
               </Button>
             </form>
@@ -119,8 +206,9 @@ export default function ForgotPasswordPage() {
                   onChange={(e) => setOtp(e.target.value)}
                 />
               </div>
+
               <Button type="submit" className="w-full h-11 bg-primary rounded-xl" disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Verify Code
               </Button>
             </form>
@@ -139,8 +227,9 @@ export default function ForgotPasswordPage() {
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
               </div>
+
               <Button type="submit" className="w-full h-11 bg-primary rounded-xl" disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Reset Password
               </Button>
             </form>

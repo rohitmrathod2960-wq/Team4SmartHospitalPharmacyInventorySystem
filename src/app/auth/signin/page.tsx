@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, User, Briefcase, Lock, Loader2 } from 'lucide-react';
+import { Shield, User, Briefcase, Lock, Mail, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,9 +12,13 @@ import { Role } from '@/lib/types';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+
 export default function SignInPage() {
   const [role, setRole] = useState<Role>('staff');
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -24,32 +28,51 @@ export default function SignInPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      // Mock validation
-      if (username && password) {
-        // Store session info locally for the demo
-        localStorage.setItem('user_session', JSON.stringify({
-          id: '1',
-          username,
-          role,
-          fullName: username.charAt(0).toUpperCase() + username.slice(1) + ' User'
-        }));
-        
-        toast({
-          title: "Sign in successful",
-          description: `Welcome back, ${role}.`,
-        });
-        router.push(`/dashboard/${role}`);
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Please enter valid credentials.",
-        });
+    try {
+      // 🔥 1️⃣ Login with Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      const user = userCredential.user;
+
+      // 🔥 2️⃣ Get user role from Firestore
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+
+      if (!userDoc.exists()) {
+        throw new Error("User data not found.");
       }
-    }, 1500);
+
+      const userData = userDoc.data();
+
+      // ✅ FIX: Save session for guards
+      localStorage.setItem(
+        "user_session",
+        JSON.stringify({
+          uid: user.uid,
+          email: user.email,
+          role: userData.role
+        })
+      );
+
+      toast({
+        title: "Sign in successful",
+        description: `Welcome back, ${userData.role}.`,
+      });
+
+      router.push(`/dashboard/${userData.role}`);
+
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Failed",
+        description: error.message || "Incorrect email or password.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const roleOptions = [
@@ -68,8 +91,10 @@ export default function SignInPage() {
           <CardTitle className="text-2xl font-bold tracking-tight">Inventra</CardTitle>
           <CardDescription>Secure Inventory & Tracking System</CardDescription>
         </CardHeader>
+
         <CardContent className="px-8 pb-8">
           <form onSubmit={handleSignIn} className="space-y-6">
+
             <div className="grid grid-cols-3 gap-3">
               {roleOptions.map((opt) => (
                 <button
@@ -78,8 +103,8 @@ export default function SignInPage() {
                   onClick={() => setRole(opt.id)}
                   className={cn(
                     "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-200",
-                    role === opt.id 
-                      ? `border-primary ${opt.bg}` 
+                    role === opt.id
+                      ? `border-primary ${opt.bg}`
                       : "border-transparent bg-muted/50 hover:bg-muted"
                   )}
                 >
@@ -90,33 +115,31 @@ export default function SignInPage() {
             </div>
 
             <div className="space-y-4">
+
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="email">Email</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                  <Input 
-                    id="username" 
-                    placeholder="Enter your username" 
+                  <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
                     className="pl-10"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
               </div>
+
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <Link href="/auth/forgot-password" title="Forgot Password link" className="text-xs text-primary hover:underline">
-                    Forgot password?
-                  </Link>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                  <Input 
-                    id="password" 
-                    type="password" 
-                    placeholder="••••••••" 
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
                     className="pl-10"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -124,9 +147,14 @@ export default function SignInPage() {
                   />
                 </div>
               </div>
+
             </div>
 
-            <Button type="submit" className="w-full h-11 bg-primary hover:bg-primary/90 rounded-xl font-semibold" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full h-11 bg-primary hover:bg-primary/90 rounded-xl font-semibold"
+              disabled={loading}
+            >
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Sign In
             </Button>
@@ -137,6 +165,7 @@ export default function SignInPage() {
                 Register
               </Link>
             </div>
+
           </form>
         </CardContent>
       </Card>

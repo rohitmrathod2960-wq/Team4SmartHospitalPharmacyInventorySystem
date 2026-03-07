@@ -28,9 +28,12 @@ export function DashboardLayout({ children, role, title }: DashboardLayoutProps)
 
   useEffect(() => {
     const session = localStorage.getItem('user_session');
+
     if (session) {
       const parsed = JSON.parse(session);
-      setUserName(parsed.fullName);
+
+      // ✅ Safe fallback
+      setUserName(parsed.fullName || parsed.email || "User");
     }
   }, []);
 
@@ -78,21 +81,30 @@ export function DashboardLayout({ children, role, title }: DashboardLayoutProps)
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-3 pl-2 pr-4 rounded-full hover:bg-muted">
                   <Avatar className="h-8 w-8 border-2 border-primary/20">
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold">{userName.charAt(0)}</AvatarFallback>
+
+                    {/* ✅ SAFE charAt */}
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                      {userName?.charAt(0)?.toUpperCase() || "U"}
+                    </AvatarFallback>
+
                   </Avatar>
+
                   <div className="text-left hidden lg:block">
                     <p className="text-xs font-bold leading-none">{userName}</p>
                     <p className="text-[10px] text-muted-foreground capitalize">{role}</p>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-xl border-none p-2">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="rounded-lg">Profile Settings</DropdownMenuItem>
                 <DropdownMenuItem className="rounded-lg">Activity Log</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive rounded-lg" onClick={() => window.location.href='/auth/signin'}>Logout</DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive rounded-lg" onClick={() => window.location.href='/auth/signin'}>
+                  Logout
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

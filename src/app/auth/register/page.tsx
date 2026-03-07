@@ -15,33 +15,6 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
-async function registerUser(
-  email: string, 
-  password: string,
-   role: Role) {
-  try {
-    // 1️⃣ Create user in Firebase Authentication
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-
-    const user = userCredential.user;
-
-    // 2️⃣ Save additional info in Firestore
-    await setDoc(doc(db, "users", user.uid), {
-      email: user.email,
-      role: role,
-      createdAt: new Date(),
-    });
-
-    alert("User Registered Successfully!");
-
-  } catch (error: any) {
-    console.error(error.message);
-  }
-}
 export default function RegisterPage() {
   const [role, setRole] = useState<Role>('staff');
   const [formData, setFormData] = useState({
@@ -57,7 +30,7 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       toast({
         variant: "destructive",
@@ -67,17 +40,43 @@ export default function RegisterPage() {
       return;
     }
 
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+      // 1️⃣ Create user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+
+      const user = userCredential.user;
+
+      // 2️⃣ Save extra info in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        fullName: formData.fullName,
+        username: formData.username,
+        email: formData.email,
+        role: role,
+        createdAt: new Date(),
+      });
+
       toast({
         title: "Account created",
-        description: "Your registration was successful. Please sign in.",
+        description: "Registration successful. Please sign in.",
       });
-      router.push('/auth/signin');
-    }, 2000);
+
+      router.push("/auth/signin");
+
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Registration Failed",
+        description: error.message,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const roleOptions = [
@@ -98,6 +97,7 @@ export default function RegisterPage() {
         </CardHeader>
         <CardContent className="px-8 pb-8">
           <form onSubmit={handleRegister} className="space-y-6">
+
             <div className="grid grid-cols-3 gap-3">
               {roleOptions.map((opt) => (
                 <button
@@ -106,8 +106,8 @@ export default function RegisterPage() {
                   onClick={() => setRole(opt.id)}
                   className={cn(
                     "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-200",
-                    role === opt.id 
-                      ? `border-primary ${opt.bg}` 
+                    role === opt.id
+                      ? `border-primary ${opt.bg}`
                       : "border-transparent bg-muted/50 hover:bg-muted"
                   )}
                 >
@@ -118,76 +118,102 @@ export default function RegisterPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
-                <Input 
-                  id="fullName" 
-                  placeholder="John Doe" 
+                <Input
+                  id="fullName"
+                  placeholder="John Doe"
                   required
                   value={formData.fullName}
-                  onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, fullName: e.target.value })
+                  }
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="john@example.com" 
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="john@example.com"
                     className="pl-10"
                     required
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                   />
                 </div>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
-                <Input 
-                  id="username" 
-                  placeholder="johndoe" 
+                <Input
+                  id="username"
+                  placeholder="johndoe"
                   required
                   value={formData.username}
-                  onChange={(e) => setFormData({...formData, username: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, username: e.target.value })
+                  }
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  placeholder="••••••••" 
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
                   required
                   value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                 />
               </div>
+
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input 
-                  id="confirmPassword" 
-                  type="password" 
-                  placeholder="••••••••" 
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
                   required
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, confirmPassword: e.target.value })
+                  }
                 />
               </div>
+
             </div>
 
-            <Button type="submit" className="w-full h-11 bg-primary hover:bg-primary/90 rounded-xl font-semibold" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full h-11 bg-primary hover:bg-primary/90 rounded-xl font-semibold"
+              disabled={loading}
+            >
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Create Account
             </Button>
 
             <div className="text-center text-sm">
-              <span className="text-muted-foreground">Already have an account? </span>
-              <Link href="/auth/signin" className="text-primary font-semibold hover:underline">
+              <span className="text-muted-foreground">
+                Already have an account?
+              </span>{" "}
+              <Link
+                href="/auth/signin"
+                className="text-primary font-semibold hover:underline"
+              >
                 Sign In
               </Link>
             </div>
+
           </form>
         </CardContent>
       </Card>

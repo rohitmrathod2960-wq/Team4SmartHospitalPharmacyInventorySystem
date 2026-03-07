@@ -70,7 +70,12 @@ export default function AdminReportsPage() {
   const [toDate, setToDate] = useState("");
   const [sortBy, setSortBy] = useState("name");
   const [filter, setFilter] = useState("");
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [data] = useState(MOCK_REPORT);
+
+  /* ============================= */
+  /*        FILTER & SORT          */
+  /* ============================= */
 
   let filtered =
     !filter.trim()
@@ -86,6 +91,49 @@ export default function AdminReportsPage() {
   if (sortBy === "current") {
     filtered.sort((a, b) => b.current - a.current);
   }
+
+  /* ============================= */
+  /*       MULTI SELECT LOGIC      */
+  /* ============================= */
+
+  const toggleRow = (sku: string) => {
+    if (selectedRows.includes(sku)) {
+      setSelectedRows(selectedRows.filter((id) => id !== sku));
+    } else {
+      setSelectedRows([...selectedRows, sku]);
+    }
+  };
+
+  /* ============================= */
+  /*        DOWNLOAD LOGIC         */
+  /* ============================= */
+
+  const handleDownload = () => {
+    if (!fromDate || !toDate) {
+      alert("Please select From Date and To Date");
+      return;
+    }
+
+    const selectedData =
+      selectedRows.length === 0
+        ? filtered
+        : filtered.filter((row) => selectedRows.includes(row.sku));
+
+    let csv =
+      "SKU,Equipment Name,Category,Supplier,Current Stock,Total IN (Range),Total OUT (Range)\n";
+
+    selectedData.forEach((row) => {
+      csv += `${row.sku},${row.name},${row.category},${row.supplier},${row.current},${row.totalIn},${row.totalOut}\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "defence-equipment-report.csv";
+    link.click();
+  };
 
   return (
     <div className="space-y-8 bg-slate-100 min-h-screen p-6">
@@ -151,7 +199,10 @@ export default function AdminReportsPage() {
             </div>
 
             {/* Download Button */}
-            <Button className="bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg">
+            <Button
+              onClick={handleDownload}
+              className="bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg"
+            >
               Download Report
             </Button>
           </div>
@@ -162,6 +213,9 @@ export default function AdminReportsPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-blue-700 hover:bg-blue-700 cursor-default">
+                  <TableHead className="text-white font-bold text-lg">
+                    Select
+                  </TableHead>
                   <TableHead className="text-white font-bold text-lg">
                     SKU
                   </TableHead>
@@ -190,7 +244,7 @@ export default function AdminReportsPage() {
                 {filtered.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="text-center text-muted-foreground"
                     >
                       No defence equipment found.
@@ -202,6 +256,13 @@ export default function AdminReportsPage() {
                       key={idx}
                       className="hover:bg-slate-100 transition-colors"
                     >
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.includes(row.sku)}
+                          onChange={() => toggleRow(row.sku)}
+                        />
+                      </TableCell>
                       <TableCell>{row.sku}</TableCell>
                       <TableCell className="font-medium">
                         {row.name}
