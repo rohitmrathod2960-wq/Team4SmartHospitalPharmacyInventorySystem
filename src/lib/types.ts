@@ -33,6 +33,10 @@ export interface StockTransaction {
   quantity: number;
   reason: string;
   performedBy: string;
+
+  /* NEW AUDIT FIELD ADDED */
+  ipAddress: string;
+
   timestamp: string;
 }
 

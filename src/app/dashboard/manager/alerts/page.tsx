@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import ManagerGuard from "@/components/dashboard/ManagerGuard";
 
@@ -35,6 +35,31 @@ export default function AlertsPage() {
   useEffect(() => {
     fetchAlerts();
   }, []);
+
+  /* ============================== */
+  /* REQUEST RESTOCK FUNCTION       */
+  /* ============================== */
+
+  const requestRestock = async (product: Product) => {
+
+    const qty = Number(prompt("Enter restock quantity request"));
+
+    if (!qty || qty <= 0) return;
+
+    await addDoc(collection(db, "restockRequests"), {
+      productId: product.id,
+      productName: product.name,
+      currentStock: product.quantity,
+      threshold: product.lowStockThreshold,
+      requestedQuantity: qty,
+      requestedBy: "Manager",
+      status: "pending",
+      createdAt: new Date()
+    });
+
+    alert("Restock request sent to Admin / Procurement.");
+
+  };
 
   return (
 
@@ -82,6 +107,19 @@ export default function AlertsPage() {
               <span className="inline-block mt-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm">
                 Low Stock Warning
               </span>
+
+              {/* NEW ACTION BUTTON */}
+
+              <div className="mt-3">
+
+                <button
+                  onClick={() => requestRestock(p)}
+                  className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
+                >
+                  Request Restock
+                </button>
+
+              </div>
 
             </div>
 

@@ -33,10 +33,10 @@ export function SidebarNav({ role }: SidebarNavProps) {
         { href: `/dashboard/staff/orders`, label: 'My Orders', icon: ClipboardList },
         { href: `/dashboard/staff/cart`, label: 'Cart', icon: Package },
         { href: `/dashboard/staff/products`, label: 'Products', icon: Package },
-        { href: `/dashboard/staff/stock`, label: 'Stock IN / OUT', icon: ArrowLeftRight },
-        { href: `/dashboard/staff/alerts`, label: 'Alerts', icon: Bell },
+        
+        
         { href: `/dashboard/staff/transactions`, label: 'Transactions', icon: ClipboardList },
-        { href: `/dashboard/staff/reports`, label: 'Report & Analysis', icon: TrendingUp },
+       
       ];
     }
 

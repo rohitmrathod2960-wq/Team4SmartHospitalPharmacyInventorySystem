@@ -3,10 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   collection,
-  getDocs,
-  updateDoc,
-  doc,
-  addDoc
+  getDocs
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -32,59 +29,6 @@ export default function StockPage() {
     fetchProducts();
   }, []);
 
-  // STOCK IN
-  const stockIn = async (product: any) => {
-
-    const qty = Number(prompt("Enter quantity to add"));
-
-    if (!qty || qty <= 0) return;
-
-    const newQty = product.quantity + qty;
-
-    await updateDoc(doc(db, "products", product.id), {
-      quantity: newQty
-    });
-
-    await addDoc(collection(db, "transactions"), {
-      productId: product.id,
-      productName: product.name,
-      type: "IN",
-      quantity: qty,
-      timestamp: new Date()
-    });
-
-    fetchProducts();
-  };
-
-  // STOCK OUT
-  const stockOut = async (product: any) => {
-
-    const qty = Number(prompt("Enter quantity to remove"));
-
-    if (!qty || qty <= 0) return;
-
-    if (qty > product.quantity) {
-      alert("Not enough stock");
-      return;
-    }
-
-    const newQty = product.quantity - qty;
-
-    await updateDoc(doc(db, "products", product.id), {
-      quantity: newQty
-    });
-
-    await addDoc(collection(db, "transactions"), {
-      productId: product.id,
-      productName: product.name,
-      type: "OUT",
-      quantity: qty,
-      timestamp: new Date()
-    });
-
-    fetchProducts();
-  };
-
   return (
 
     <ManagerGuard>
@@ -92,7 +36,7 @@ export default function StockPage() {
       <div className="space-y-6">
 
         <h1 className="text-3xl font-bold">
-          Stock Management
+          Stock Overview
         </h1>
 
         <div className="bg-white rounded-xl shadow overflow-hidden">
@@ -104,8 +48,8 @@ export default function StockPage() {
               <tr>
                 <th className="p-3 text-left">Equipment</th>
                 <th className="text-left">Available</th>
-                <th>Status</th>
-                <th className="text-center">Actions</th>
+                <th className="text-left">Assigned</th>
+                <th className="text-left">Low Stock</th>
               </tr>
 
             </thead>
@@ -124,8 +68,11 @@ export default function StockPage() {
 
                 products.map(product => {
 
+                  const available = product.quantity || 0;
+                  const assigned = product.assigned || 0;
+
                   const lowStock =
-                    product.quantity <= product.lowStockThreshold;
+                    available <= (product.lowStockThreshold || 5);
 
                   return (
 
@@ -136,7 +83,11 @@ export default function StockPage() {
                       </td>
 
                       <td>
-                        {product.quantity}
+                        {available}
+                      </td>
+
+                      <td>
+                        {assigned}
                       </td>
 
                       <td>
@@ -149,29 +100,11 @@ export default function StockPage() {
 
                         ) : (
 
-                          <span className="bg-purple-500 text-white px-3 py-1 rounded-full text-sm">
-                            Available
+                          <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm">
+                            OK
                           </span>
 
                         )}
-
-                      </td>
-
-                      <td className="flex gap-2 justify-center p-2">
-
-                        <button
-                          onClick={() => stockIn(product)}
-                          className="bg-green-600 text-white px-3 py-1 rounded"
-                        >
-                          + Stock In
-                        </button>
-
-                        <button
-                          onClick={() => stockOut(product)}
-                          className="bg-red-500 text-white px-3 py-1 rounded"
-                        >
-                          - Stock Out
-                        </button>
 
                       </td>
 

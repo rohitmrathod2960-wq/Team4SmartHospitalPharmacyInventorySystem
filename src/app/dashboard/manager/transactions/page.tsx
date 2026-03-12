@@ -26,12 +26,68 @@ export default function TransactionsPage() {
 
     const snap = await getDocs(q);
 
-    const data: Transaction[] = snap.docs.map(doc => ({
-      id: doc.id,
-      ...(doc.data() as Omit<Transaction, "id">)
-    }));
+    /* If Firestore has data */
+    if (!snap.empty) {
 
-    setTransactions(data);
+      const data: Transaction[] = snap.docs.map(doc => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Transaction, "id">)
+      }));
+
+      setTransactions(data);
+      return;
+    }
+
+    /* ----------------------------- */
+    /* SAMPLE TRANSACTION HISTORY    */
+    /* ----------------------------- */
+
+    const sample: Transaction[] = [
+
+      {
+        id: "1",
+        productName: "NVGs Gen 3",
+        quantity: 2,
+        type: "OUT",
+        timestamp: { toDate: () => new Date("2026-01-21T17:19:00") }
+      },
+
+      {
+        id: "2",
+        productName: "Standard Issue Radio",
+        quantity: 5,
+        type: "IN",
+        timestamp: { toDate: () => new Date("2026-01-22T09:45:00") }
+      },
+
+      {
+        id: "3",
+        productName: "Ballistic Helmet",
+        quantity: 1,
+        type: "OUT",
+        timestamp: { toDate: () => new Date("2026-01-22T10:10:00") }
+      },
+
+      {
+        id: "4",
+        productName: "Field Medical Kit",
+        quantity: 10,
+        type: "IN",
+        timestamp: { toDate: () => new Date("2026-01-22T11:00:00") }
+      },
+
+      {
+        id: "5",
+        productName: "Satcom Transceiver",
+        quantity: 1,
+        type: "OUT",
+        timestamp: { toDate: () => new Date("2026-01-22T12:30:00") }
+      }
+
+    ];
+
+    setTransactions(sample);
+
   };
 
   useEffect(() => {

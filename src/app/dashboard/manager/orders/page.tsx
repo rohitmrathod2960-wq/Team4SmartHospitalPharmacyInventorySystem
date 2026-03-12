@@ -105,6 +105,36 @@ Equipment Requests
 
 <div key={order.id} className="border p-4 mb-2 rounded">
 
+{/* NEW REQUEST INFORMATION */}
+
+<div className="mb-3 text-sm space-y-1">
+
+<p><b>Requested By:</b> {order.requestedBy || "staff45"}</p>
+
+<p><b>Reason:</b> {order.reason || "N/A"}</p>
+
+<p>
+<b>Requested Date:</b>{" "}
+{order.createdAt
+? new Date(order.createdAt.seconds * 1000).toLocaleDateString()
+: "N/A"}
+</p>
+
+<p>
+<b>Priority:</b>{" "}
+<span className={
+order.priority === "High"
+? "text-red-600 font-semibold"
+: order.priority === "Medium"
+? "text-yellow-600 font-semibold"
+: "text-green-600 font-semibold"
+}>
+{order.priority || "Low"}
+</span>
+</p>
+
+</div>
+
 {/* DISPLAY ITEMS */}
 
 {order.items?.map((item:any,index:number)=>(

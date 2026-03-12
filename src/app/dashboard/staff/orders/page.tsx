@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect,useState } from "react";
-import { collection,getDocs } from "firebase/firestore";
+import { collection,getDocs,updateDoc,doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function StaffOrdersPage(){
@@ -24,6 +24,25 @@ id:d.id,
 useEffect(()=>{
 fetchOrders();
 },[]);
+
+
+/* ============================= */
+/* CANCEL REQUEST                */
+/* ============================= */
+
+const cancelRequest = async(id:string)=>{
+
+const confirmCancel = confirm("Cancel this request?");
+if(!confirmCancel) return;
+
+await updateDoc(doc(db,"orders",id),{
+status:"cancelled"
+});
+
+fetchOrders();
+
+};
+
 
 return(
 
@@ -55,6 +74,13 @@ No requests found
 Qty: {item.quantity}
 </p>
 
+{/* NEW FIELD */}
+<p className="text-sm text-gray-500">
+Requested: {order.createdAt?.seconds
+? new Date(order.createdAt.seconds*1000).toLocaleDateString()
+: "Unknown"}
+</p>
+
 </div>
 
 ))}
@@ -68,12 +94,47 @@ order.status === "approved"
 ? "text-green-600 font-semibold ml-2"
 : order.status === "rejected"
 ? "text-red-600 font-semibold ml-2"
+: order.status === "cancelled"
+? "text-gray-500 font-semibold ml-2"
 : "text-yellow-600 font-semibold ml-2"
 }>
 {order.status || "pending"}
 </span>
 
 </p>
+
+{/* APPROVED BY */}
+
+{order.status==="approved" && order.approvedBy &&(
+
+<p className="text-sm text-gray-600 mt-1">
+Approved By: {order.approvedBy}
+</p>
+
+)}
+
+{/* REJECTION REASON */}
+
+{order.status==="rejected" && order.rejectionReason &&(
+
+<p className="text-sm text-red-600 mt-1">
+Reason: {order.rejectionReason}
+</p>
+
+)}
+
+{/* CANCEL BUTTON */}
+
+{order.status==="pending" &&(
+
+<button
+onClick={()=>cancelRequest(order.id)}
+className="mt-3 bg-red-500 text-white px-3 py-1 rounded"
+>
+Cancel
+</button>
+
+)}
 
 </div>
 

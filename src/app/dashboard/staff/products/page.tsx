@@ -5,77 +5,64 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 
-/* 🔹 Added Firestore */
+/* 🔹 Firestore */
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function StaffProductsPage() {
 
-  const [products, setProducts] = useState([
-    { id: 1, name: "Standard Issue Radio", qty: 18 },
-    { id: 2, name: "Tactical Vest (L)", qty: 12 },
-    { id: 3, name: "NVGs Gen 3", qty: 4 },
-    { id: 4, name: "Ballistic Helmet", qty: 12 },
-    { id: 5, name: "Satcom Transceiver", qty: 2 },
-    { id: 6, name: "Level IV Plates", qty: 150 },
-    { id: 7, name: "Tactical Drone v4", qty: 3 },
-    { id: 8, name: "Night Vision Gen 3", qty: 8 },
-    { id: 9, name: "Field Medical Kit", qty: 20 },
-    { id: 10, name: "Combat Boots", qty: 30 },
+  const [products] = useState([
+    { id: 1, name: "Standard Issue Radio", category: "Communication", qty: 18 },
+    { id: 2, name: "Tactical Vest (L)", category: "Armor", qty: 12 },
+    { id: 3, name: "NVGs Gen 3", category: "Optics", qty: 4 },
+    { id: 4, name: "Ballistic Helmet", category: "Armor", qty: 12 },
+    { id: 5, name: "Satcom Transceiver", category: "Communication", qty: 2 },
+    { id: 6, name: "Level IV Plates", category: "Armor", qty: 150 },
+    { id: 7, name: "Tactical Drone v4", category: "UAV", qty: 3 },
+    { id: 8, name: "Night Vision Gen 3", category: "Optics", qty: 8 },
+    { id: 9, name: "Field Medical Kit", category: "Medical", qty: 20 },
+    { id: 10, name: "Combat Boots", category: "Gear", qty: 30 },
   ]);
 
-  const [open, setOpen] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: "", qty: "" });
-  const [error, setError] = useState("");
-
-  /* 🔹 Add To Cart Function */
-  const addToCart = async (product: any) => {
+  /* 🔹 Request Equipment */
+  const requestItem = async (product: any) => {
 
     try {
 
-      await addDoc(collection(db, "cart"), {
+      await addDoc(collection(db, "orders"), {
 
-        productId: product.id,
-        productName: product.name,
-        quantity: 1,
-        userId: "staff1", // later replace with logged user
+        items: [
+          {
+            productId: product.id,
+            productName: product.name,
+            quantity: 1,
+          }
+        ],
+
+        status: "pending",
+        userId: "staff1", // replace with logged in user later
         createdAt: Timestamp.now(),
 
       });
 
-      alert("Product added to cart");
+      alert("Request submitted for approval");
 
     } catch (err) {
 
       console.error(err);
-      alert("Error adding to cart");
+      alert("Error submitting request");
 
     }
 
   };
 
-  const handleAddProduct = () => {
+  /* 🔹 Availability Status */
+  const getStatus = (qty:number) => {
 
-    if (!newProduct.name.trim() || !newProduct.qty.trim() || isNaN(Number(newProduct.qty))) {
-      setError("Please enter a valid product name and quantity.");
-      return;
-    }
-
-    setProducts([
-      ...products,
-      {
-        id: products.length ? Math.max(...products.map(p => p.id)) + 1 : 1,
-        name: newProduct.name,
-        qty: Number(newProduct.qty),
-      },
-    ]);
-
-    setNewProduct({ name: "", qty: "" });
-    setError("");
-    setOpen(false);
+    if(qty === 0) return { label:"Out of Stock", color:"text-red-600" };
+    if(qty <= 5) return { label:"Limited", color:"text-yellow-600" };
+    return { label:"Available", color:"text-green-600" };
 
   };
 
@@ -84,23 +71,16 @@ export default function StaffProductsPage() {
     <div className="space-y-6 bg-[#f8fafc] min-h-screen p-4">
 
       <h1 className="text-3xl font-extrabold mb-4 text-gray-800 drop-shadow-sm">
-        Staff Inventory Dashboard
+        Equipment Catalog
       </h1>
 
       <Card className="shadow-2xl rounded-2xl border-none">
 
-        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+        <CardHeader className="pb-2">
 
           <CardTitle className="text-2xl font-bold text-gray-900">
-            Products
+            Available Equipment
           </CardTitle>
-
-          <Button
-            className="bg-green-700 hover:bg-green-800 text-white font-semibold rounded-lg px-5 py-2 shadow-md"
-            onClick={() => setOpen(true)}
-          >
-            + Add Product
-          </Button>
 
         </CardHeader>
 
@@ -119,14 +99,17 @@ export default function StaffProductsPage() {
                   </TableHead>
 
                   <TableHead className="text-white font-bold text-lg">
-                    Name
+                    Item
                   </TableHead>
 
                   <TableHead className="text-white font-bold text-lg">
-                    Qty
+                    Category
                   </TableHead>
 
-                  {/* 🔹 Added Column */}
+                  <TableHead className="text-white font-bold text-lg">
+                    Availability
+                  </TableHead>
+
                   <TableHead className="text-white font-bold text-lg">
                     Action
                   </TableHead>
@@ -137,14 +120,18 @@ export default function StaffProductsPage() {
 
               <TableBody>
 
-                {products.map((product, idx) => (
+                {products.map((product, idx) => {
+
+                  const status = getStatus(product.qty);
+
+                  return(
 
                   <TableRow
                     key={product.id}
                     className={cn(
                       "transition-colors",
                       idx % 2 === 0 ? "bg-white" : "bg-gray-50",
-                      "hover:bg-green-50 cursor-pointer"
+                      "hover:bg-green-50"
                     )}
                   >
 
@@ -157,24 +144,28 @@ export default function StaffProductsPage() {
                     </TableCell>
 
                     <TableCell className="text-gray-700">
-                      {product.qty}
+                      {product.category}
                     </TableCell>
 
-                    {/* 🔹 Add To Cart Button */}
+                    <TableCell className={cn("font-semibold",status.color)}>
+                      {status.label}
+                    </TableCell>
+
                     <TableCell>
 
                       <Button
-                        onClick={() => addToCart(product)}
+                        disabled={product.qty === 0}
+                        onClick={() => requestItem(product)}
                         className="bg-blue-600 hover:bg-blue-700 text-white"
                       >
-                        Add To Cart
+                        Request
                       </Button>
 
                     </TableCell>
 
                   </TableRow>
 
-                ))}
+                )})}
 
               </TableBody>
 
@@ -185,56 +176,6 @@ export default function StaffProductsPage() {
         </CardContent>
 
       </Card>
-
-      {/* Add Product Modal */}
-
-      <Dialog open={open} onOpenChange={setOpen}>
-
-        <DialogContent className="max-w-md rounded-2xl">
-
-          <DialogHeader>
-            <DialogTitle>Add New Product</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-
-            <Input
-              placeholder="Product Name"
-              value={newProduct.name}
-              onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
-              className="rounded-lg"
-            />
-
-            <Input
-              placeholder="Quantity"
-              type="number"
-              value={newProduct.qty}
-              onChange={e => setNewProduct({ ...newProduct, qty: e.target.value })}
-              className="rounded-lg"
-            />
-
-            {error && (
-              <div className="text-red-600 text-sm font-medium">
-                {error}
-              </div>
-            )}
-
-          </div>
-
-          <DialogFooter>
-
-            <Button
-              className="bg-green-700 hover:bg-green-800 text-white font-semibold rounded-lg"
-              onClick={handleAddProduct}
-            >
-              Add Product
-            </Button>
-
-          </DialogFooter>
-
-        </DialogContent>
-
-      </Dialog>
 
     </div>
 

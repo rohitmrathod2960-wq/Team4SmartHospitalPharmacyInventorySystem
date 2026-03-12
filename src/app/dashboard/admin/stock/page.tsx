@@ -24,6 +24,8 @@ const MOCK_STOCK = [
     category: "Protective Gear",
     quantity: 40,
     type: "IN",
+    reason: "Supplier Delivery",
+    performedBy: "Admin",
     date: "2026-02-20",
   },
   {
@@ -32,6 +34,8 @@ const MOCK_STOCK = [
     category: "Aerial Systems",
     quantity: 3,
     type: "OUT",
+    reason: "Issued to Unit",
+    performedBy: "Warehouse Officer",
     date: "2026-02-22",
   },
   {
@@ -40,13 +44,19 @@ const MOCK_STOCK = [
     category: "Detection Systems",
     quantity: 5,
     type: "IN",
+    reason: "Supplier Delivery",
+    performedBy: "Admin",
     date: "2026-02-23",
   },
 ];
 
 export default function StockManagementPage() {
+
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("ALL");
+  const [reason, setReason] = useState("");
+  const [performedBy, setPerformedBy] = useState("");
+
   const [data, setData] = useState(MOCK_STOCK);
 
   /* ============================= */
@@ -54,6 +64,7 @@ export default function StockManagementPage() {
   /* ============================= */
 
   const handleStockIn = () => {
+
     if (!search) {
       alert("Search equipment name first");
       return;
@@ -69,9 +80,15 @@ export default function StockManagementPage() {
     }
 
     const updated = [...data];
-    updated[itemIndex].quantity += 1;
-    updated[itemIndex].type = "IN";
-    updated[itemIndex].date = new Date().toISOString().split("T")[0];
+
+    updated[itemIndex] = {
+      ...updated[itemIndex],
+      quantity: updated[itemIndex].quantity + 1,
+      type: "IN",
+      reason: reason || "Supplier Delivery",
+      performedBy: performedBy || "Admin",
+      date: new Date().toISOString().split("T")[0],
+    };
 
     setData(updated);
   };
@@ -81,6 +98,7 @@ export default function StockManagementPage() {
   /* ============================= */
 
   const handleStockOut = () => {
+
     if (!search) {
       alert("Search equipment name first");
       return;
@@ -101,9 +119,15 @@ export default function StockManagementPage() {
     }
 
     const updated = [...data];
-    updated[itemIndex].quantity -= 1;
-    updated[itemIndex].type = "OUT";
-    updated[itemIndex].date = new Date().toISOString().split("T")[0];
+
+    updated[itemIndex] = {
+      ...updated[itemIndex],
+      quantity: updated[itemIndex].quantity - 1,
+      type: "OUT",
+      reason: reason || "Issued to Unit",
+      performedBy: performedBy || "Warehouse Officer",
+      date: new Date().toISOString().split("T")[0],
+    };
 
     setData(updated);
   };
@@ -122,9 +146,11 @@ export default function StockManagementPage() {
 
   return (
     <div className="space-y-8 bg-slate-100 min-h-screen p-6">
+
       <Card className="shadow-xl rounded-2xl border-none bg-white">
 
         <CardHeader className="pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
           <CardTitle className="text-2xl font-bold text-blue-800">
             Stock Management
           </CardTitle>
@@ -158,6 +184,33 @@ export default function StockManagementPage() {
               </select>
             </div>
 
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold mb-1">
+                Reason
+              </label>
+              <Input
+                placeholder="Supplier delivery / Issued to unit"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="rounded-lg"
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold mb-1">
+                Performed By
+              </label>
+              <select
+                value={performedBy}
+                onChange={(e) => setPerformedBy(e.target.value)}
+                className="rounded-lg border px-3 py-2"
+              >
+                <option value="">Select</option>
+                <option value="Admin">Admin</option>
+                <option value="Warehouse Officer">Warehouse Officer</option>
+              </select>
+            </div>
+
             <Button
               onClick={handleStockIn}
               className="bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
@@ -173,55 +226,87 @@ export default function StockManagementPage() {
             </Button>
 
           </div>
+
         </CardHeader>
 
         <CardContent>
+
           <div className="overflow-x-auto rounded-xl mt-4">
+
             <Table>
+
               <TableHeader>
+
                 <TableRow className="bg-blue-700 hover:bg-blue-700">
+
                   <TableHead className="text-white font-bold text-lg">
                     SKU
                   </TableHead>
+
                   <TableHead className="text-white font-bold text-lg">
                     Equipment Name
                   </TableHead>
+
                   <TableHead className="text-white font-bold text-lg">
                     Category
                   </TableHead>
+
                   <TableHead className="text-white font-bold text-lg">
                     Quantity
                   </TableHead>
+
                   <TableHead className="text-white font-bold text-lg">
                     Type
                   </TableHead>
+
+                  <TableHead className="text-white font-bold text-lg">
+                    Reason
+                  </TableHead>
+
+                  <TableHead className="text-white font-bold text-lg">
+                    Performed By
+                  </TableHead>
+
                   <TableHead className="text-white font-bold text-lg">
                     Date
                   </TableHead>
+
                 </TableRow>
+
               </TableHeader>
 
               <TableBody>
+
                 {filtered.length === 0 ? (
+
                   <TableRow>
+
                     <TableCell
-                      colSpan={6}
+                      colSpan={8}
                       className="text-center text-muted-foreground"
                     >
                       No stock transactions found.
                     </TableCell>
+
                   </TableRow>
+
                 ) : (
+
                   filtered.map((item, index) => (
+
                     <TableRow
                       key={index}
                       className="hover:bg-slate-100 transition-colors"
                     >
+
                       <TableCell>{item.sku}</TableCell>
+
                       <TableCell className="font-medium">
                         {item.name}
                       </TableCell>
+
                       <TableCell>{item.category}</TableCell>
+
                       <TableCell>{item.quantity}</TableCell>
 
                       <TableCell>
@@ -236,16 +321,28 @@ export default function StockManagementPage() {
                         )}
                       </TableCell>
 
+                      <TableCell>{item.reason}</TableCell>
+
+                      <TableCell>{item.performedBy}</TableCell>
+
                       <TableCell>{item.date}</TableCell>
+
                     </TableRow>
+
                   ))
+
                 )}
+
               </TableBody>
+
             </Table>
+
           </div>
+
         </CardContent>
 
       </Card>
+
     </div>
   );
 }

@@ -8,7 +8,10 @@ import {
   Wrench, 
   Users,
   Activity,
-  ArrowRight
+  ArrowRight,
+  ArrowDownRight,
+  ArrowUpRight,
+  ClipboardCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -25,6 +28,7 @@ import {
 } from 'recharts';
 
 export default function ManagerDashboard() {
+
   const stats = [
     { label: 'Inventory Value', value: '$2.4M', icon: TrendingUp, colorClass: 'bg-emerald-50 text-emerald-600' },
     { label: 'Stock Items', value: '412', icon: Package, colorClass: 'bg-blue-50 text-blue-600' },
@@ -42,13 +46,37 @@ export default function ManagerDashboard() {
 
   const COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444'];
 
+  /* =============================== */
+  /* OPERATIONAL ACTIVITY DATA       */
+  /* =============================== */
+
+  const activity = [
+    {
+      type: "ISSUED",
+      message: "John received NVGs",
+      time: "10 minutes ago"
+    },
+    {
+      type: "RETURNED",
+      message: "Team Alpha returned radios",
+      time: "1 hour ago"
+    },
+    {
+      type: "REQUEST",
+      message: "Vehicle kit request approved",
+      time: "3 hours ago"
+    }
+  ];
+
   return (
     <DashboardLayout role="manager" title="Operations Management">
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Resource Dashboard</h1>
           <p className="text-muted-foreground mt-1">Oversee stock levels and operational readiness.</p>
         </div>
+
         <Link href="/dashboard/manager/maintenance">
           <Button className="rounded-xl shadow-lg shadow-secondary/20 bg-secondary hover:bg-secondary/90">
             Predictive AI Tool
@@ -57,69 +85,170 @@ export default function ManagerDashboard() {
         </Link>
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
           <StatCard key={i} {...stat} />
         ))}
       </div>
 
+      {/* Charts + AI */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
         <Card className="lg:col-span-2 border-none shadow-sm rounded-2xl overflow-hidden">
           <CardHeader>
             <CardTitle>Inventory Distribution</CardTitle>
             <CardDescription>Stock distribution by equipment category.</CardDescription>
           </CardHeader>
+
           <CardContent className="h-[300px]">
+
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
+
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#666' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#666' }} />
-                <Tooltip 
-                  cursor={{ fill: '#f9fafb' }}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: '#666' }}
                 />
+
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: '#666' }}
+                />
+
+                <Tooltip
+                  cursor={{ fill: '#f9fafb' }}
+                  contentStyle={{
+                    borderRadius: '12px',
+                    border: 'none',
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
+                  }}
+                />
+
                 <Bar dataKey="val" radius={[8, 8, 0, 0]} barSize={40}>
+
                   {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
+
                 </Bar>
+
               </BarChart>
             </ResponsiveContainer>
+
           </CardContent>
         </Card>
 
+        {/* AI Insights */}
         <Card className="border-none shadow-sm rounded-2xl overflow-hidden bg-gradient-to-br from-blue-500 to-blue-700 text-white">
+
           <CardHeader>
             <CardTitle>AI Insights</CardTitle>
-            <CardDescription className="text-blue-100">Predictive maintenance summary</CardDescription>
+            <CardDescription className="text-blue-100">
+              Predictive maintenance summary
+            </CardDescription>
           </CardHeader>
+
           <CardContent className="space-y-6">
+
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-wider opacity-60">High Risk Unit</p>
               <h4 className="font-bold text-xl">UAV-Alpha (SN-009)</h4>
-              <p className="text-sm opacity-80">Motor vibrations detected. Failure predicted within 48 operating hours.</p>
+              <p className="text-sm opacity-80">
+                Motor vibrations detected. Failure predicted within 48 operating hours.
+              </p>
             </div>
+
             <div className="h-px bg-white/20 w-full" />
+
             <div className="space-y-2">
-              <p className="text-xs uppercase tracking-wider opacity-60">Fleet Status</p>
+
+              <p className="text-xs uppercase tracking-wider opacity-60">
+                Fleet Status
+              </p>
+
               <div className="flex justify-between items-end">
                 <span className="text-3xl font-bold">82%</span>
                 <span className="text-xs opacity-70">Readiness Level</span>
               </div>
+
               <div className="h-2 bg-white/20 rounded-full overflow-hidden">
                 <div className="h-full bg-emerald-400 w-[82%]" />
               </div>
+
             </div>
-            <Link href="/dashboard/manager/maintenance" className="block mt-4">
-              <Button variant="secondary" className="w-full bg-white text-blue-600 hover:bg-blue-50 border-none rounded-xl">
+
+            <Link href="/dashboard/manager/maintenance">
+              <Button
+                variant="secondary"
+                className="w-full bg-white text-blue-600 hover:bg-blue-50 border-none rounded-xl"
+              >
                 Open AI Tool
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </Link>
+
           </CardContent>
         </Card>
+
       </div>
+
+      {/* ===================================== */}
+      {/* NEW SECTION — OPERATIONAL ACTIVITY     */}
+      {/* ===================================== */}
+
+      <Card className="border-none shadow-sm rounded-2xl">
+
+        <CardHeader>
+          <CardTitle>Operations Activity</CardTitle>
+          <CardDescription>
+            Equipment issued, returned and approved requests
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+
+          {activity.map((item, i) => (
+
+            <div key={i} className="flex items-center justify-between border-b pb-3">
+
+              <div className="flex items-center gap-3">
+
+                {item.type === "ISSUED" && (
+                  <ArrowUpRight className="text-red-500 w-5 h-5" />
+                )}
+
+                {item.type === "RETURNED" && (
+                  <ArrowDownRight className="text-green-500 w-5 h-5" />
+                )}
+
+                {item.type === "REQUEST" && (
+                  <ClipboardCheck className="text-blue-500 w-5 h-5" />
+                )}
+
+                <span className="font-medium">
+                  {item.message}
+                </span>
+
+              </div>
+
+              <span className="text-sm text-gray-500">
+                {item.time}
+              </span>
+
+            </div>
+
+          ))}
+
+        </CardContent>
+
+      </Card>
+
     </DashboardLayout>
   );
 }

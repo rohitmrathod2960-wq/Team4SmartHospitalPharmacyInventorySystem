@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, addDoc, deleteDoc, doc } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 type User = {
@@ -9,6 +9,8 @@ type User = {
   fullName?: string;
   email?: string;
   role?: string;
+  status?: string;
+  lastLogin?: any;
 };
 
 export default function UsersPage() {
@@ -17,6 +19,10 @@ const [users,setUsers] = useState<User[]>([]);
 const [name,setName] = useState("");
 const [email,setEmail] = useState("");
 const [role,setRole] = useState("staff");
+
+const [editingUser,setEditingUser] = useState<User | null>(null);
+const [editName,setEditName] = useState("");
+const [editRole,setEditRole] = useState("");
 
 const fetchUsers = async () => {
 
@@ -43,7 +49,9 @@ await addDoc(collection(db,"users"),{
 fullName:name,
 email,
 role,
-createdAt:new Date()
+status:"active",
+createdAt:new Date(),
+lastLogin:null
 });
 
 setName("");
@@ -53,11 +61,96 @@ fetchUsers();
 
 };
 
-const deleteUser = async(id:string)=>{
+const deleteUser = async(id:string,role?:string)=>{
+
+if(role==="admin"){
+alert("System admin cannot be deleted");
+return;
+}
 
 await deleteDoc(doc(db,"users",id));
 
 fetchUsers();
+
+};
+
+const toggleUserStatus = async(user:User)=>{
+
+if(!user.id) return;
+
+const newStatus = user.status === "suspended" ? "active" : "suspended";
+
+await updateDoc(doc(db,"users",user.id),{
+status:newStatus
+});
+
+fetchUsers();
+
+};
+
+const openEdit = (user:User)=>{
+
+setEditingUser(user);
+setEditName(user.fullName || "");
+setEditRole(user.role || "staff");
+
+};
+
+const saveEdit = async()=>{
+
+if(!editingUser) return;
+
+await updateDoc(doc(db,"users",editingUser.id),{
+fullName:editName,
+role:editRole
+});
+
+setEditingUser(null);
+
+fetchUsers();
+
+};
+
+const resetPassword = async(user:User)=>{
+alert(`Password reset link sent to ${user.email}`);
+};
+
+
+
+// ⭐ RELATIVE LAST LOGIN FORMATTER
+
+const formatLastLogin = (lastLogin:any) => {
+
+if(!lastLogin) return "Now";
+
+try{
+
+let loginDate:Date;
+
+if(lastLogin.seconds){
+loginDate = new Date(lastLogin.seconds * 1000);
+}else{
+loginDate = new Date(lastLogin);
+}
+
+const now = new Date();
+const diff = now.getTime() - loginDate.getTime();
+
+const minutes = Math.floor(diff/60000);
+const hours = Math.floor(diff/3600000);
+const days = Math.floor(diff/86400000);
+
+if(minutes < 1) return "Just now";
+if(minutes < 60) return `${minutes} min ago`;
+if(hours < 24) return `${hours} hour${hours>1?"s":""} ago`;
+if(days === 1) return "Yesterday";
+if(days < 7) return `${days} days ago`;
+
+return loginDate.toLocaleDateString();
+
+}catch{
+return "Now";
+}
 
 };
 
@@ -114,10 +207,12 @@ Create User
 <thead className="bg-blue-600 text-white">
 
 <tr>
-<th>Name</th>
-<th>Email</th>
-<th>Role</th>
-<th>Action</th>
+<th className="text-left p-2">Name</th>
+<th className="text-left p-2">Email</th>
+<th className="text-left p-2">Role</th>
+<th className="text-left p-2">Status</th>
+<th className="text-left p-2">Last Login</th>
+<th className="text-left p-2">Actions</th>
 </tr>
 
 </thead>
@@ -128,19 +223,56 @@ Create User
 
 <tr key={user.id} className="border-b">
 
-<td>{user.fullName}</td>
-<td>{user.email}</td>
-<td>{user.role}</td>
+<td className="p-2">{user.fullName}</td>
+<td className="p-2">{user.email}</td>
+<td className="p-2">{user.role}</td>
 
-<td>
+<td className="p-2">
+<span className={user.status==="suspended"?"text-red-600":"text-green-600"}>
+{user.status || "active"}
+</span>
+</td>
+
+<td className="p-2">
+{formatLastLogin(user.lastLogin)}
+</td>
+
+<td className="p-2">
+<div className="flex gap-2">
 
 <button
-onClick={()=>deleteUser(user.id)}
+onClick={()=>openEdit(user)}
+className="bg-yellow-500 text-white px-3 py-1 rounded"
+>
+Edit
+</button>
+
+<button
+onClick={()=>resetPassword(user)}
+className="bg-purple-600 text-white px-3 py-1 rounded"
+>
+Reset
+</button>
+
+<button
+onClick={()=>toggleUserStatus(user)}
+className={`px-3 py-1 rounded text-white ${
+user.status === "suspended"
+? "bg-green-600"
+: "bg-gray-600"
+}`}
+>
+{user.status === "suspended" ? "Enable" : "Disable"}
+</button>
+
+<button
+onClick={()=>deleteUser(user.id,user.role)}
 className="bg-red-500 text-white px-3 py-1 rounded"
 >
 Delete
 </button>
 
+</div>
 </td>
 
 </tr>
@@ -150,6 +282,59 @@ Delete
 </tbody>
 
 </table>
+
+{/* EDIT MODAL */}
+
+{editingUser && (
+
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+
+<div className="bg-white p-6 rounded shadow space-y-4 w-96">
+
+<h2 className="text-xl font-bold">
+Edit User
+</h2>
+
+<input
+value={editName}
+onChange={e=>setEditName(e.target.value)}
+className="border p-2 rounded w-full"
+/>
+
+<select
+value={editRole}
+onChange={e=>setEditRole(e.target.value)}
+className="border p-2 rounded w-full"
+>
+
+<option value="manager">Manager</option>
+<option value="staff">Staff</option>
+
+</select>
+
+<div className="flex justify-end gap-3">
+
+<button
+onClick={()=>setEditingUser(null)}
+className="px-4 py-2 border rounded"
+>
+Cancel
+</button>
+
+<button
+onClick={saveEdit}
+className="bg-blue-600 text-white px-4 py-2 rounded"
+>
+Save
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+)}
 
 </div>
 
