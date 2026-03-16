@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,77 +13,12 @@ import {
   TableCell,
 } from "@/components/ui/table";
 
-/* ============================= */
-/*   SMART DEFENCE MOCK REPORT   */
-/* ============================= */
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-const MOCK_REPORT = [
-  {
-    sku: "NVG-001",
-    name: "Night Vision Goggles",
-    category: "Optical Equipment",
-    supplier: "DefTech Industries",
-    current: 25,
-    totalIn: 50,
-    totalOut: 25,
-    teamUsage: "Recon Team",
-    maintenanceCost: 12000,
-    supplierPerformance: "On Time",
-    agingDays: 120,
-  },
-  {
-    sku: "DRN-007",
-    name: "Surveillance Drone X7",
-    category: "Aerial Systems",
-    supplier: "AeroDefense Corp",
-    current: 12,
-    totalIn: 20,
-    totalOut: 8,
-    teamUsage: "Drone Unit",
-    maintenanceCost: 45000,
-    supplierPerformance: "Delayed",
-    agingDays: 90,
-  },
-  {
-    sku: "RAD-450",
-    name: "Portable Radar Unit",
-    category: "Detection Systems",
-    supplier: "SecureWave Technologies",
-    current: 8,
-    totalIn: 15,
-    totalOut: 7,
-    teamUsage: "Security Team",
-    maintenanceCost: 18000,
-    supplierPerformance: "On Time",
-    agingDays: 210,
-  },
-  {
-    sku: "ARM-556",
-    name: "Tactical Body Armor",
-    category: "Protective Gear",
-    supplier: "ShieldOps Ltd",
-    current: 40,
-    totalIn: 70,
-    totalOut: 30,
-    teamUsage: "Infantry",
-    maintenanceCost: 6000,
-    supplierPerformance: "On Time",
-    agingDays: 60,
-  },
-  {
-    sku: "COM-900",
-    name: "Encrypted Radio Device",
-    category: "Communication Systems",
-    supplier: "SignalSecure Pvt Ltd",
-    current: 18,
-    totalIn: 35,
-    totalOut: 17,
-    teamUsage: "Communication Unit",
-    maintenanceCost: 9000,
-    supplierPerformance: "Delayed",
-    agingDays: 150,
-  },
-];
+/* ============================= */
+/*   DEFENCE REPORT (DYNAMIC)    */
+/* ============================= */
 
 export default function AdminReportsPage() {
 
@@ -92,7 +27,45 @@ export default function AdminReportsPage() {
   const [sortBy, setSortBy] = useState("name");
   const [filter, setFilter] = useState("");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [data] = useState(MOCK_REPORT);
+  const [data, setData] = useState<any[]>([]);
+
+  /* ============================= */
+  /*   FETCH PRODUCTS FROM DB      */
+  /* ============================= */
+
+  useEffect(() => {
+
+    const fetchProducts = async () => {
+
+      const snap = await getDocs(collection(db, "products"));
+
+      const products = snap.docs.map(doc => {
+
+        const p: any = doc.data();
+
+        return {
+          sku: p.sku,
+          name: p.name,
+          category: p.category,
+          supplier: p.supplier,
+          current: p.quantity,
+          totalIn: p.quantity,
+          totalOut: 0,
+          teamUsage: "N/A",
+          maintenanceCost: 0,
+          supplierPerformance: "On Time",
+          agingDays: 0,
+        };
+
+      });
+
+      setData(products);
+
+    };
+
+    fetchProducts();
+
+  }, []);
 
   /* ============================= */
   /*        FILTER & SORT          */
@@ -118,11 +91,13 @@ export default function AdminReportsPage() {
   /* ============================= */
 
   const toggleRow = (sku: string) => {
+
     if (selectedRows.includes(sku)) {
       setSelectedRows(selectedRows.filter((id) => id !== sku));
     } else {
       setSelectedRows([...selectedRows, sku]);
     }
+
   };
 
   /* ============================= */
@@ -130,6 +105,7 @@ export default function AdminReportsPage() {
   /* ============================= */
 
   const handleDownload = () => {
+
     if (!fromDate || !toDate) {
       alert("Please select From Date and To Date");
       return;
@@ -160,10 +136,10 @@ export default function AdminReportsPage() {
   /*     ANALYTICS CALCULATIONS    */
   /* ============================= */
 
-  const mostIssued = [...data].sort((a, b) => b.totalOut - a.totalOut)[0];
+  const mostIssued = [...data].sort((a, b) => b.totalOut - a.totalOut)[0] || {};
 
   const totalMaintenanceCost = data.reduce(
-    (sum, item) => sum + item.maintenanceCost,
+    (sum, item) => sum + (item.maintenanceCost || 0),
     0
   );
 
@@ -322,7 +298,7 @@ export default function AdminReportsPage() {
 
           <div className="bg-blue-50 p-4 rounded-xl">
             <p className="text-sm text-gray-500">Most Issued Equipment</p>
-            <p className="text-lg font-semibold">{mostIssued.name}</p>
+            <p className="text-lg font-semibold">{mostIssued?.name || "-"}</p>
           </div>
 
           <div className="bg-green-50 p-4 rounded-xl">

@@ -23,216 +23,276 @@ type Supplier = {
 
 export default function AlertsPage() {
 
-  const [lowStock, setLowStock] = useState<Product[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [lowStock,setLowStock] = useState<Product[]>([]);
+  const [suppliers,setSuppliers] = useState<Supplier[]>([]);
+  const [openDropdown,setOpenDropdown] = useState<string | null>(null);
 
-  /* ----------------------------- */
-  /* FETCH LOW STOCK PRODUCTS     */
-  /* ----------------------------- */
+  const [selectedSupplier,setSelectedSupplier] = useState<Supplier | null>(null);
+  const [selectedProduct,setSelectedProduct] = useState<Product | null>(null);
 
-  const fetchAlerts = async () => {
+  const [message,setMessage] = useState("");
 
-    const snap = await getDocs(collection(db, "products"));
+  /* FETCH PRODUCTS */
 
-    const products: Product[] = snap.docs.map(d => ({
-      id: d.id,
-      ...(d.data() as Omit<Product, "id">)
+  const fetchAlerts = async ()=>{
+
+    const snap = await getDocs(collection(db,"products"));
+
+    const products:Product[] = snap.docs.map(d=>({
+      id:d.id,
+      ...(d.data() as Omit<Product,"id">)
     }));
 
-    const filtered = products.filter(p => {
-
+    const filtered = products.filter(p=>{
       const quantity = p.quantity ?? p.qty ?? 0;
       const threshold = p.lowStockThreshold ?? p.lowStock ?? 5;
-
       return quantity <= threshold;
-
     });
 
     setLowStock(filtered);
 
   };
 
-  /* ----------------------------- */
-  /* FETCH SUPPLIERS              */
-  /* ----------------------------- */
+  /* FETCH SUPPLIERS */
 
-  const fetchSuppliers = async () => {
+  const fetchSuppliers = async ()=>{
 
-    const snap = await getDocs(collection(db, "suppliers"));
+    const snap = await getDocs(collection(db,"suppliers"));
 
-    const data: Supplier[] = snap.docs.map(doc => ({
-      id: doc.id,
-      name: doc.data().name,
-      email: doc.data().email
+    const data:Supplier[] = snap.docs.map(doc=>({
+      id:doc.id,
+      name:doc.data().name,
+      email:doc.data().email
     }));
 
     setSuppliers(data);
 
   };
 
-  useEffect(() => {
-
+  useEffect(()=>{
     fetchAlerts();
     fetchSuppliers();
+  },[]);
 
-  }, []);
 
-  /* ----------------------------- */
-  /* REQUEST RESTOCK FUNCTION     */
-  /* ----------------------------- */
+  /* OPEN EMAIL MODAL */
 
-  const requestRestock = async (
-    product: Product,
-    supplier: Supplier
-  ) => {
+  const openEmailModal = (product:Product,supplier:Supplier)=>{
 
-    const qty = Number(prompt(`Enter restock quantity request for ${supplier.name}`));
-
-    if (!qty || qty <= 0) return;
-
-    const quantity = product.quantity ?? product.qty ?? 0;
-    const threshold = product.lowStockThreshold ?? product.lowStock ?? 5;
-
-    await addDoc(collection(db, "restockRequests"), {
-      productId: product.id,
-      productName: product.name,
-      currentStock: quantity,
-      threshold: threshold,
-      requestedQuantity: qty,
-      supplierName: supplier.name,
-      supplierEmail: supplier.email,
-      requestedBy: "Manager",
-      status: "pending",
-      createdAt: new Date()
-    });
-
-    alert(`Restock request sent to ${supplier.name}`);
-
+    setSelectedSupplier(supplier);
+    setSelectedProduct(product);
     setOpenDropdown(null);
+    setMessage(
+`Dear ${supplier.name},
+
+Our stock for "${product.name}" has dropped below the safety threshold.
+
+Please supply additional units as soon as possible.
+
+Regards,
+Inventory Manager`
+    );
 
   };
 
+
+  /* SEND EMAIL */
+
+  const sendEmail = async ()=>{
+
+    if(!selectedSupplier || !selectedProduct) return;
+
+    await fetch("/api/send-restock-mail",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({
+        to:selectedSupplier.email,
+        subject:`Restock Request - ${selectedProduct.name}`,
+        message:message
+      })
+    });
+
+    const quantity = selectedProduct.quantity ?? selectedProduct.qty ?? 0;
+    const threshold = selectedProduct.lowStockThreshold ?? selectedProduct.lowStock ?? 5;
+
+    await addDoc(collection(db,"restockRequests"),{
+
+      productId:selectedProduct.id,
+      productName:selectedProduct.name,
+      supplierName:selectedSupplier.name,
+      supplierEmail:selectedSupplier.email,
+      currentStock:quantity,
+      threshold:threshold,
+      message:message,
+      status:"pending",
+      createdAt:new Date()
+
+    });
+
+    alert("Email sent successfully");
+
+    setSelectedSupplier(null);
+    setSelectedProduct(null);
+
+  };
+
+
   return (
 
-    <ManagerGuard>
+<ManagerGuard>
 
-      <div className="space-y-6">
+<div className="space-y-6">
 
-        <h1 className="text-3xl font-bold text-red-600">
-          Low Stock Alerts
-        </h1>
+<h1 className="text-3xl font-bold text-red-600">
+Low Stock Alerts
+</h1>
 
-        {lowStock.length === 0 && (
+<div className="grid grid-cols-3 gap-4">
 
-          <div className="bg-green-100 border border-green-400 text-green-700 p-4 rounded-lg">
-            All equipment levels are healthy. No low stock items detected.
-          </div>
+{lowStock.map(p=>{
 
-        )}
+const quantity = p.quantity ?? p.qty ?? 0;
+const threshold = p.lowStockThreshold ?? p.lowStock ?? 5;
 
-        <div className="grid grid-cols-3 gap-4">
+return(
 
-          {lowStock.map(p => {
+<div
+key={p.id}
+className="bg-white border-l-4 border-red-500 shadow p-4 rounded-lg"
+>
 
-            const quantity = p.quantity ?? p.qty ?? 0;
-            const threshold = p.lowStockThreshold ?? p.lowStock ?? 5;
+<h2 className="text-lg font-semibold">{p.name}</h2>
 
-            return (
+<p className="text-gray-600">
+Available: <span className="font-bold text-red-600">{quantity}</span>
+</p>
 
-              <div
-                key={p.id}
-                className="bg-white border-l-4 border-red-500 shadow p-4 rounded-lg"
-              >
+<p className="text-sm text-gray-500">
+Threshold: {threshold}
+</p>
 
-                <h2 className="text-lg font-semibold">
-                  {p.name}
-                </h2>
+<span className="inline-block mt-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm">
+Low Stock Warning
+</span>
 
-                <p className="text-gray-600">
-                  Available: <span className="font-bold text-red-600">
-                    {quantity}
-                  </span>
-                </p>
+<div className="mt-3 flex items-center gap-2 relative">
 
-                <p className="text-sm text-gray-500">
-                  Threshold: {threshold}
-                </p>
+<button
+className="bg-blue-600 text-white px-4 py-1 rounded"
+onClick={()=>setOpenDropdown(openDropdown===p.id?null:p.id)}
+>
+Request Restock
+</button>
 
-                <span className="inline-block mt-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm">
-                  Low Stock Warning
-                </span>
+<button
+onClick={()=>setOpenDropdown(openDropdown===p.id?null:p.id)}
+className="bg-gray-200 p-1 rounded"
+>
+<ChevronDown size={18}/>
+</button>
 
-                {/* ACTION BUTTONS */}
+{openDropdown===p.id &&(
 
-                <div className="mt-3 flex items-center gap-2 relative">
+<div className="absolute top-10 left-0 bg-white shadow-lg border rounded w-64 z-10">
 
-                  {/* MAIN BUTTON */}
+{suppliers.map(s=>(
+<div
+key={s.id}
+onClick={()=>openEmailModal(p,s)}
+className="p-3 hover:bg-gray-100 cursor-pointer border-b"
+>
 
-                  <button
-                    className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
-                    onClick={() => setOpenDropdown(
-                      openDropdown === p.id ? null : p.id
-                    )}
-                  >
-                    Request Restock
-                  </button>
+<p className="font-semibold text-sm">{s.name}</p>
+<p className="text-xs text-gray-500">{s.email}</p>
 
-                  {/* DROPDOWN ARROW */}
+</div>
+))}
 
-                  <button
-                    onClick={() => setOpenDropdown(
-                      openDropdown === p.id ? null : p.id
-                    )}
-                    className="bg-gray-200 p-1 rounded hover:bg-gray-300"
-                  >
-                    <ChevronDown size={18} />
-                  </button>
+</div>
 
-                  {/* SUPPLIER DROPDOWN */}
+)}
 
-                  {openDropdown === p.id && (
+</div>
 
-                    <div className="absolute top-10 left-0 bg-white shadow-lg border rounded w-64 z-10">
+</div>
 
-                      {suppliers.map(s => (
+);
 
-                        <div
-                          key={s.id}
-                          onClick={() => requestRestock(p, s)}
-                          className="p-3 hover:bg-gray-100 cursor-pointer border-b"
-                        >
+})}
 
-                          <p className="font-semibold text-sm">
-                            {s.name}
-                          </p>
+</div>
 
-                          <p className="text-xs text-gray-500">
-                            {s.email}
-                          </p>
+</div>
 
-                        </div>
 
-                      ))}
+{/* EMAIL COMPOSE MODAL */}
 
-                    </div>
+{selectedSupplier && (
 
-                  )}
+<div className="fixed inset-0 bg-black/40 flex items-center justify-end pr-32 z-50">
 
-                </div>
+<div className="bg-white p-6 rounded-xl w-[500px] space-y-4">
 
-              </div>
+<h2 className="text-xl font-bold">
+Send Restock Email
+</h2>
 
-            );
+<div>
 
-          })}
+<label className="text-sm text-gray-500">To</label>
 
-        </div>
+<input
+className="w-full border rounded p-2"
+value={selectedSupplier.email}
+readOnly
+/>
 
-      </div>
+</div>
 
-    </ManagerGuard>
+<div>
 
-  );
+<label className="text-sm text-gray-500">Subject</label>
+
+<input
+className="w-full border rounded p-2"
+value={`Restock Request - ${selectedProduct?.name}`}
+readOnly
+/>
+
+</div>
+
+<textarea
+className="w-full border rounded p-2 h-40"
+value={message}
+onChange={(e)=>setMessage(e.target.value)}
+/>
+
+<div className="flex justify-end gap-3">
+
+<button
+onClick={()=>setSelectedSupplier(null)}
+className="px-4 py-2 bg-gray-300 rounded"
+>
+Cancel
+</button>
+
+<button
+onClick={sendEmail}
+className="px-4 py-2 bg-blue-600 text-white rounded"
+>
+Send
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+)}
+
+</ManagerGuard>
+
+);
 
 }

@@ -1,5 +1,6 @@
-"use client"; 
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,14 +13,21 @@ import {
   TableCell,
 } from "@/components/ui/table";
 
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp
+} from "firebase/firestore";
+
+import { db } from "@/lib/firebase";
+
 export default function AdminCategoryPage() {
 
-  const [categories, setCategories] = useState([
-    { id: 1, name: "Electronics", description: "Electronic devices and accessories", products: 5, status: "active" },
-    { id: 2, name: "Office Supplies", description: "General office supplies and stationery", products: 0, status: "active" },
-    { id: 3, name: "Furniture", description: "Office area workspace furniture", products: 2, status: "active" },
-  ]);
-
+  const [categories, setCategories] = useState<any[]>([]);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -28,72 +36,123 @@ export default function AdminCategoryPage() {
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
 
-  const handleAddCategory = () => {
+  /* =============================== */
+  /* FETCH CATEGORIES FROM FIRESTORE */
+  /* =============================== */
+
+  const fetchCategories = async () => {
+
+    const snap = await getDocs(collection(db, "categories"));
+
+    const data = snap.docs.map((docItem, index) => ({
+      id: docItem.id,
+      index: index + 1,
+      ...docItem.data()
+    }));
+
+    setCategories(data);
+
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  /* =============================== */
+  /* ADD CATEGORY                    */
+  /* =============================== */
+
+  const handleAddCategory = async () => {
+
     if (!name.trim() || !desc.trim()) return;
 
-    const newId = categories.length ? Math.max(...categories.map(c => c.id)) + 1 : 1;
-
-    setCategories([
-      ...categories,
-      { id: newId, name, description: desc, products: 0, status: "active" }
-    ]);
+    await addDoc(collection(db, "categories"), {
+      name: name,
+      description: desc,
+      products: 0,
+      status: "active",
+      createdAt: serverTimestamp()
+    });
 
     setName("");
     setDesc("");
 
     setSuccessMsg("Category added successfully");
+
+    fetchCategories();
+
     setTimeout(() => setSuccessMsg(""), 2000);
   };
 
-  const handleDeleteCategory = (id: number) => {
+  /* =============================== */
+  /* DELETE CATEGORY                 */
+  /* =============================== */
 
-    const category = categories.find(c => c.id === id);
+  const handleDeleteCategory = async (id: string, products: number) => {
 
-    if (!category) return;
-
-    if (category.products > 0) {
+    if (products > 0) {
       setSuccessMsg("Cannot delete category because products exist");
       setTimeout(() => setSuccessMsg(""), 2000);
       return;
     }
 
-    setCategories(categories.filter(c => c.id !== id));
+    await deleteDoc(doc(db, "categories", id));
 
     setSuccessMsg("Category deleted successfully");
+
+    fetchCategories();
+
     setTimeout(() => setSuccessMsg(""), 2000);
   };
 
-  const handleArchiveCategory = (id:number) => {
+  /* =============================== */
+  /* ARCHIVE CATEGORY                */
+  /* =============================== */
 
-    setCategories(categories.map(cat =>
-      cat.id === id ? { ...cat, status: "archived" } : cat
-    ));
+  const handleArchiveCategory = async (id: string) => {
+
+    await updateDoc(doc(db, "categories", id), {
+      status: "archived"
+    });
 
     setSuccessMsg("Category archived");
+
+    fetchCategories();
+
     setTimeout(() => setSuccessMsg(""), 2000);
   };
 
+  /* =============================== */
+  /* EDIT CATEGORY                   */
+  /* =============================== */
+
   const openEdit = (cat:any) => {
+
     setEditingCategory(cat);
     setEditName(cat.name);
     setEditDesc(cat.description);
+
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
 
-    setCategories(categories.map(cat =>
-      cat.id === editingCategory.id
-        ? { ...cat, name: editName, description: editDesc }
-        : cat
-    ));
+    await updateDoc(doc(db, "categories", editingCategory.id), {
+      name: editName,
+      description: editDesc
+    });
 
     setEditingCategory(null);
 
     setSuccessMsg("Category updated");
+
+    fetchCategories();
+
     setTimeout(() => setSuccessMsg(""), 2000);
+
   };
 
   return (
+
     <div className="space-y-8 bg-[#f8fafc] min-h-screen p-6">
 
       <Card className="shadow-2xl rounded-2xl border-none">
@@ -106,8 +165,13 @@ export default function AdminCategoryPage() {
 
         <CardContent>
 
+          {/* ADD CATEGORY */}
+
           <div className="mb-6">
-            <h3 className="font-semibold mb-2 text-lg">Add Category</h3>
+
+            <h3 className="font-semibold mb-2 text-lg">
+              Add Category
+            </h3>
 
             <div className="flex flex-wrap gap-3 items-center">
 
@@ -127,7 +191,6 @@ export default function AdminCategoryPage() {
 
               <Button
                 onClick={handleAddCategory}
-                variant="default"
                 className="rounded-lg font-semibold"
               >
                 Add Category
@@ -143,37 +206,22 @@ export default function AdminCategoryPage() {
 
           </div>
 
+          {/* CATEGORY TABLE */}
+
           <div className="overflow-x-auto rounded-xl mt-4">
 
             <Table>
 
               <TableHeader>
 
-                <TableRow className="bg-blue-700 hover:bg-blue-700 cursor-default">
+                <TableRow className="bg-blue-700 hover:bg-blue-700">
 
-                  <TableHead className="text-white font-bold text-lg">
-                    ID
-                  </TableHead>
-
-                  <TableHead className="text-white font-bold text-lg">
-                    Name
-                  </TableHead>
-
-                  <TableHead className="text-white font-bold text-lg">
-                    Description
-                  </TableHead>
-
-                  <TableHead className="text-white font-bold text-lg">
-                    Products
-                  </TableHead>
-
-                  <TableHead className="text-white font-bold text-lg">
-                    Status
-                  </TableHead>
-
-                  <TableHead className="text-white font-bold text-lg">
-                    Action
-                  </TableHead>
+                  <TableHead className="text-white font-bold text-lg">ID</TableHead>
+                  <TableHead className="text-white font-bold text-lg">Name</TableHead>
+                  <TableHead className="text-white font-bold text-lg">Description</TableHead>
+                  <TableHead className="text-white font-bold text-lg">Products</TableHead>
+                  <TableHead className="text-white font-bold text-lg">Status</TableHead>
+                  <TableHead className="text-white font-bold text-lg">Action</TableHead>
 
                 </TableRow>
 
@@ -184,18 +232,20 @@ export default function AdminCategoryPage() {
                 {categories.length === 0 ? (
 
                   <TableRow>
+
                     <TableCell colSpan={6} className="text-center text-muted-foreground">
                       No categories found.
                     </TableCell>
+
                   </TableRow>
 
                 ) : (
 
-                  categories.map(cat => (
+                  categories.map((cat, index) => (
 
-                    <TableRow key={cat.id} className="hover:bg-muted/30 transition-colors">
+                    <TableRow key={cat.id} className="hover:bg-muted/30">
 
-                      <TableCell>{cat.id}</TableCell>
+                      <TableCell>{index + 1}</TableCell>
 
                       <TableCell>{cat.name}</TableCell>
 
@@ -204,16 +254,18 @@ export default function AdminCategoryPage() {
                       <TableCell>{cat.products}</TableCell>
 
                       <TableCell>
+
                         <span className={cat.status === "archived" ? "text-red-500" : "text-green-600"}>
                           {cat.status}
                         </span>
+
                       </TableCell>
 
                       <TableCell className="flex gap-2">
 
                         <Button
                           size="sm"
-                          className="bg-yellow-500 text-white rounded-md"
+                          className="bg-yellow-500 text-white"
                           onClick={() => openEdit(cat)}
                         >
                           Edit
@@ -221,7 +273,7 @@ export default function AdminCategoryPage() {
 
                         <Button
                           size="sm"
-                          className="bg-gray-600 text-white rounded-md"
+                          className="bg-gray-600 text-white"
                           onClick={() => handleArchiveCategory(cat.id)}
                         >
                           Archive
@@ -230,8 +282,7 @@ export default function AdminCategoryPage() {
                         <Button
                           variant="destructive"
                           size="sm"
-                          className="rounded-md"
-                          onClick={() => handleDeleteCategory(cat.id)}
+                          onClick={() => handleDeleteCategory(cat.id, cat.products)}
                         >
                           Delete
                         </Button>
@@ -262,20 +313,16 @@ export default function AdminCategoryPage() {
 
           <div className="bg-white p-6 rounded shadow space-y-4 w-96">
 
-            <h2 className="text-xl font-bold">
-              Edit Category
-            </h2>
+            <h2 className="text-xl font-bold">Edit Category</h2>
 
             <Input
               value={editName}
               onChange={e => setEditName(e.target.value)}
-              className="rounded-lg"
             />
 
             <Input
               value={editDesc}
               onChange={e => setEditDesc(e.target.value)}
-              className="rounded-lg"
             />
 
             <div className="flex justify-end gap-3">
@@ -303,5 +350,6 @@ export default function AdminCategoryPage() {
       )}
 
     </div>
+
   );
 }
