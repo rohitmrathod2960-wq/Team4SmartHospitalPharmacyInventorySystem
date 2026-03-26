@@ -12,7 +12,6 @@ const [quantity,setQuantity] = useState(1);
 const [reason,setReason] = useState("");
 const [deploymentDate,setDeploymentDate] = useState("");
 
-/* FETCH AVAILABLE EQUIPMENT */
 
 const fetchProducts = async()=>{
 

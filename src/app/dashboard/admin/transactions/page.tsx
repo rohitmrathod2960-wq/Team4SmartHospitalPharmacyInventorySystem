@@ -24,9 +24,9 @@ import { cn } from "@/lib/utils";
 
 import {
   collection,
-  getDocs,
   query,
   orderBy,
+  onSnapshot,   // ✅ added
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -47,26 +47,33 @@ export default function TransactionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  async function fetchTransactions() {
+  /* -------------------------------------------------- */
+  /* 🔥 REAL-TIME FETCH (DYNAMIC UPDATE)                */
+  /* -------------------------------------------------- */
+
+  useEffect(() => {
 
     const q = query(
       collection(db, "transactions"),
       orderBy("createdAt", "desc")
     );
 
-    const snap = await getDocs(q);
+    const unsubscribe = onSnapshot(q, (snap) => {
 
-    const data: Transaction[] = snap.docs.map(doc => ({
-      id: doc.id,
-      ...(doc.data() as Omit<Transaction, "id">)
-    }));
+      const data: Transaction[] = snap.docs.map(doc => ({
+        id: doc.id,   // ✅ unique ID from Firestore
+        ...(doc.data() as Omit<Transaction, "id">)
+      }));
 
-    setTransactions(data);
-  }
+      setTransactions(data);
 
-  useEffect(() => {
-    fetchTransactions();
+    });
+
+    return () => unsubscribe();
+
   }, []);
+
+  /* -------------------------------------------------- */
 
   const filtered = transactions.filter((t) =>
     (t.productName || "")
@@ -162,18 +169,18 @@ export default function TransactionsPage() {
 
                       </TableCell>
 
-                      <TableCell>{t.productName}</TableCell>
+                      <TableCell>{t.productName || "-"}</TableCell>
 
                       <TableCell>
 
                         <Badge>
                           {t.type === "IN" ? "+" : "-"}
-                          {t.quantity}
+                          {t.quantity || 0}
                         </Badge>
 
                       </TableCell>
 
-                      <TableCell>{t.reason || "-"}</TableCell>
+                      <TableCell>{t.reason || "N/A"}</TableCell>
 
                       <TableCell className="flex items-center gap-2">
 
@@ -182,7 +189,7 @@ export default function TransactionsPage() {
 
                       </TableCell>
 
-                      <TableCell>{t.ipAddress || "-"}</TableCell>
+                      <TableCell>{t.ipAddress || "N/A"}</TableCell>
 
                       <TableCell>{date}</TableCell>
 

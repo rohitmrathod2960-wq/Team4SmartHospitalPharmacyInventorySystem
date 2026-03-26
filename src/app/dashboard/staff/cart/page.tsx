@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect,useState } from "react";
-import { collection,getDocs,addDoc } from "firebase/firestore";
+import { collection,getDocs,addDoc, serverTimestamp } from "firebase/firestore"; // ✅ added
 import { db } from "@/lib/firebase";
+import { getAuth } from "firebase/auth"; // ✅ added
 
 export default function CartPage(){
 
@@ -50,6 +51,14 @@ return;
 
 const product = products.find(p=>p.id===productId);
 
+/* 🔥 GET LOGGED IN USER */
+const auth = getAuth();
+const user = auth.currentUser;
+
+/* -------------------- */
+/* SAVE ORDER (existing) */
+/* -------------------- */
+
 await addDoc(collection(db,"orders"),{
 
 items:[{
@@ -61,10 +70,34 @@ quantity
 reason,
 deploymentDate,
 status:"pending",
-userId:"staff3",   // replace later with logged in user
-createdAt:new Date()
+userId:user?.uid || "staff3", // ✅ dynamic user
+userEmail:user?.email || "unknown",
+createdAt:serverTimestamp() // ✅ better timestamp
 
 });
+
+
+/* -------------------- */
+/* 🔥 ADD TRANSACTION   */
+/* -------------------- */
+
+await addDoc(collection(db,"transactions"),{
+
+productId:productId,
+productName:product?.name,
+quantity,
+type:"OUT",
+
+// ✅ IMPORTANT FEATURE
+reason:reason,
+performedBy:user?.email || "staff",
+userId:user?.uid || null,
+ipAddress:"N/A",
+
+createdAt:serverTimestamp()
+
+});
+
 
 alert("Equipment request submitted for approval");
 

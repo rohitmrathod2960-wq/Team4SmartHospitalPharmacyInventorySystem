@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import { 
   Package, 
@@ -19,14 +20,12 @@ import {
 import { 
   collection, 
   query, 
-  where, 
   onSnapshot,
   orderBy,
   getDocs
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
-import { getAuth } from "firebase/auth";
 
 export default function StaffDashboard() {
 
@@ -35,86 +34,103 @@ export default function StaffDashboard() {
   const [alerts,setAlerts] = useState<any[]>([]);
   const [myEquipment,setMyEquipment] = useState<any[]>([]);
 
-  /* -------------------------------------------------- */
-  /* Fetch Assigned Equipment for Staff (Recent 2)     */
-  /* -------------------------------------------------- */
+ 
+/* -------------------------------------------------- */
+/* Fetch Assigned Equipment for Staff (FINAL FIX)     */
+/* -------------------------------------------------- */
 
-  useEffect(()=>{
+useEffect(()=>{
 
-    const auth = getAuth();
-    const user = auth.currentUser;
+  const auth = getAuth();
+
+  let unsubscribeSnapshot:any = null;
+
+  const unsubscribeAuth = onAuthStateChanged(auth,(user)=>{
 
     if(!user) return;
 
     const q = query(
       collection(db,"assignments"),
-      where("userId","==",user.uid),
       orderBy("createdAt","desc")
     );
 
-    const unsub = onSnapshot(q,(snap)=>{
+    unsubscribeSnapshot = onSnapshot(q,(snap)=>{
 
-      const data = snap.docs.map(doc=>({
+      const allData = snap.docs.map(doc=>({
         id:doc.id,
         ...doc.data()
       }));
 
-      /* Only 2 recent items */
-      setMyEquipment(data.slice(0,2));
+      // ✅ FILTER BASED ON LOGGED IN USER
+      const filtered = allData.filter((item:any)=>{
+
+        return (
+          item.userId === user.uid ||
+          item.userEmail === user.email
+        );
+
+      });
+
+      setMyEquipment(filtered.slice(0,2));
 
     });
 
-    return ()=>unsub();
+  });
 
-  },[]);
+  return ()=>{
+    unsubscribeAuth();
+    if(unsubscribeSnapshot) unsubscribeSnapshot();
+  };
+
+},[]);
 
 
-  /* -------------------------------------------------- */
-  /* AUTO GENERATE LOW STOCK ALERTS                    */
-  /* -------------------------------------------------- */
+/* -------------------------------------------------- */
+/* AUTO GENERATE LOW STOCK ALERTS                    */
+/* -------------------------------------------------- */
 
-  useEffect(()=>{
+useEffect(()=>{
 
-    const fetchLowStockAlerts = async ()=>{
+  const fetchLowStockAlerts = async ()=>{
 
-      const snap = await getDocs(collection(db,"products"));
+    const snap = await getDocs(collection(db,"products"));
 
-      const products = snap.docs.map(doc=>({
-        id:doc.id,
-        ...doc.data()
-      }));
+    const products = snap.docs.map(doc=>({
+      id:doc.id,
+      ...doc.data()
+    }));
 
-      const filtered = products.filter((p:any)=>{
+    const filtered = products.filter((p:any)=>{
 
-        const quantity = p.quantity ?? p.qty ?? 0;
-        const threshold = p.lowStockThreshold ?? p.lowStock ?? 5;
+      const quantity = p.quantity ?? p.qty ?? 0;
+      const threshold = p.lowStockThreshold ?? p.lowStock ?? 5;
 
-        return quantity <= threshold;
+      return quantity <= threshold;
 
-      });
+    });
 
-      const alertsData = filtered.map((p:any)=>{
+    const alertsData = filtered.map((p:any)=>{
 
-        const quantity = p.quantity ?? p.qty ?? 0;
-        const threshold = p.lowStockThreshold ?? p.lowStock ?? 5;
+      const quantity = p.quantity ?? p.qty ?? 0;
+      const threshold = p.lowStockThreshold ?? p.lowStock ?? 5;
 
-        return {
-          id:p.id,
-          productName:p.name,
-          quantity:quantity,
-          threshold:threshold,
-          message:"Stock level below threshold. Please notify inventory manager."
-        }
+      return {
+        id:p.id,
+        productName:p.name,
+        quantity:quantity,
+        threshold:threshold,
+        message:"Stock level below threshold. Please notify inventory manager."
+      }
 
-      });
+    });
 
-      setAlerts(alertsData);
+    setAlerts(alertsData);
 
-    };
+  };
 
-    fetchLowStockAlerts();
+  fetchLowStockAlerts();
 
-  },[]);
+},[]);
 
 
 
@@ -222,51 +238,50 @@ export default function StaffDashboard() {
 
           {/* Remaining code unchanged */}
 
-            <h2 className="text-2xl font-bold tracking-tight mb-4">
-              Inventory Quick View
-            </h2>
+          <h2 className="text-2xl font-bold tracking-tight mb-4">
+            Inventory Quick View
+          </h2>
 
-            <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
+          <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
 
-              <CardContent className="p-6 space-y-4">
+            <CardContent className="p-6 space-y-4">
 
-                {[
-                  { name: 'NVGs Gen 3', available: 4, category: 'Optics' },
-                  { name: 'Ballistic Helmets', available: 12, category: 'Personal Gear' },
-                  { name: 'Satcom Transceiver', available: 2, category: 'Communication' },
-                ].map((inv, i) => (
+              {[
+                { name: 'NVGs Gen 3', available: 4, category: 'Optics' },
+                { name: 'Ballistic Helmets', available: 12, category: 'Personal Gear' },
+                { name: 'Satcom Transceiver', available: 2, category: 'Communication' },
+              ].map((inv, i) => (
 
-                  <div key={i} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50">
+                <div key={i} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50">
 
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3">
 
-                      <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                        <Package className="w-5 h-5 text-muted-foreground" />
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-bold">{inv.name}</p>
-                        <p className="text-[10px] text-muted-foreground uppercase">{inv.category}</p>
-                      </div>
-
+                    <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                      <Package className="w-5 h-5 text-muted-foreground" />
                     </div>
 
-                    <Badge
-                      variant={inv.available > 5 ? 'secondary' : 'outline'}
-                      className="rounded-lg"
-                    >
-                      {inv.available} Available
-                    </Badge>
+                    <div>
+                      <p className="text-sm font-bold">{inv.name}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase">{inv.category}</p>
+                    </div>
 
                   </div>
 
-                ))}
+                  <Badge
+                    variant={inv.available > 5 ? 'secondary' : 'outline'}
+                    className="rounded-lg"
+                  >
+                    {inv.available} Available
+                  </Badge>
 
-              </CardContent>
+                </div>
 
-            </Card>
+              ))}
 
-          
+            </CardContent>
+
+          </Card>
+
           {/* Staff Alert View */}
           <section>
 
@@ -315,8 +330,7 @@ export default function StaffDashboard() {
 
         </div>
 
-
-        {/* Right Side Panel */}
+        {/* Right Side Panel (UNCHANGED) */}
         <div className="space-y-8">
 
           <Card className="border-none shadow-sm rounded-2xl bg-primary text-primary-foreground overflow-hidden">
@@ -360,7 +374,6 @@ export default function StaffDashboard() {
             </CardContent>
 
           </Card>
-
 
           <Card className="border-none shadow-sm rounded-2xl">
 
