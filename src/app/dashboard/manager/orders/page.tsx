@@ -66,7 +66,7 @@ await updateDoc(orderRef,{
 status:"approved"
 });
 
-/* ASSIGN EQUIPMENT TO STAFF */
+/* ASSIGN EQUIPMENT TO pharmacist */
 
 await addDoc(collection(db,"assignments"),{
 
@@ -109,7 +109,7 @@ Equipment Requests
 
 <div className="mb-3 text-sm space-y-1">
 
-<p><b>Requested By:</b> {order.requestedBy || "staff45"}</p>
+<p><b>Requested By:</b> {order.requestedBy || "pharmacist"}</p>
 
 <p><b>Reason:</b> {order.reason || "N/A"}</p>
 

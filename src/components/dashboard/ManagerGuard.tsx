@@ -25,8 +25,8 @@ export default function ManagerGuard({
     if (user.role !== "manager") {
       if (user.role === "admin") {
         router.replace("/dashboard/admin");
-      } else if (user.role === "staff") {
-        router.replace("/dashboard/staff");
+      } else if (user.role === "pharmacist") {
+        router.replace("/dashboard/pharmacist");
       } else {
         router.replace("/auth/signin");
       }

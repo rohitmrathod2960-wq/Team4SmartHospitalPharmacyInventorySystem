@@ -4,7 +4,7 @@ import { useEffect,useState } from "react";
 import { collection,getDocs,updateDoc,doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-export default function StaffOrdersPage(){
+export default function pharmacistOrdersPage(){
 
 const [orders,setOrders] = useState<any[]>([]);
 

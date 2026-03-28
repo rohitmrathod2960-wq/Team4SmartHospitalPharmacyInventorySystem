@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 interface SidebarNavProps {
-  role: 'admin' | 'manager' | 'staff';
+  role: 'admin' | 'manager' | 'pharmacist';
 }
 
 export function SidebarNav({ role }: SidebarNavProps) {
@@ -26,16 +26,16 @@ export function SidebarNav({ role }: SidebarNavProps) {
 
   const getLinks = () => {
 
-    if (role === 'staff') {
+    if (role === 'pharmacist') {
       return [
-        { href: `/dashboard/staff`, label: 'Dashboard', icon: LayoutDashboard },
-        { href: `/dashboard/staff/assigned-equipment`, label: 'Assigned Equipment', icon: Package },
-        { href: `/dashboard/staff/orders`, label: 'My Orders', icon: ClipboardList },
-        { href: `/dashboard/staff/cart`, label: 'Cart', icon: Package },
-        { href: `/dashboard/staff/products`, label: 'Products', icon: Package },
+        { href: `/dashboard/pharmacist`, label: 'Dashboard', icon: LayoutDashboard },
+        { href: `/dashboard/pharmacist/assigned-equipment`, label: 'Assigned Equipment', icon: Package },
+        { href: `/dashboard/pharmacist/orders`, label: 'My Orders', icon: ClipboardList },
+        { href: `/dashboard/pharmacist/cart`, label: 'Cart', icon: Package },
+        { href: `/dashboard/pharmacist/products`, label: 'Products', icon: Package },
         
         
-        { href: `/dashboard/staff/transactions`, label: 'Transactions', icon: ClipboardList },
+        { href: `/dashboard/pharmacist/transactions`, label: 'Transactions', icon: ClipboardList },
        
       ];
     }

@@ -47,7 +47,7 @@ await addDoc(collection(db,"returns"),{
 productId:item.productId,
 productName:item.productName,
 serial:item.serial || "N/A",
-returnedBy:"Staff",
+returnedBy:"pharmacist",
 returnedAt:new Date(),
 condition:item.condition || "Good"
 
@@ -73,7 +73,7 @@ await addDoc(collection(db,"damageReports"),{
 productId:item.productId,
 productName:item.productName,
 serial:item.serial || "N/A",
-reportedBy:"Staff",
+reportedBy:"pharmacist",
 issue,
 createdAt:new Date(),
 status:"pending"

@@ -43,7 +43,7 @@ return;
 /* realistic quantity control */
 
 if(quantity < 1 || quantity > 2){
-alert("Staff can request only 1–2 units");
+alert("pharmacist can request only 1–2 units");
 return;
 }
 
@@ -60,7 +60,7 @@ quantity
 reason,
 deploymentDate,
 status:"pending",
-userId:"staff3",   // replace later with logged in user
+userId:"pharmacist",   // replace later with logged in user
 createdAt:new Date()
 
 });
@@ -136,7 +136,7 @@ className="border rounded p-2 w-32"
 />
 
 <p className="text-xs text-gray-500 mt-1">
-Staff may request maximum 2 units
+pharmacist may request maximum 2 units
 </p>
 
 </div>

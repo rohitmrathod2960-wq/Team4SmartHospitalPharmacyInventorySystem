@@ -26,7 +26,7 @@ const MOCK_INVENTORY: Equipment[] = [
   { id: '7', equipmentName: 'Ballistic Helmet (MICH)', category: 'Personal Gear', serialNumber: 'HLM-003', quantity: 72, minStockLevelLevel: 20, status: 'Available', createdAt: '2023-07-22' },
 ];
 
-export default function StaffInventoryPage() {
+export default function pharmacistInventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
@@ -42,7 +42,7 @@ export default function StaffInventoryPage() {
   };
 
   return (
-    <DashboardLayout role="staff" title="Resource Catalog">
+    <DashboardLayout role="pharmacist" title="Resource Catalog">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Available Inventory</h1>
         <p className="text-muted-foreground">View real-time stock and submit requisition requests.</p>

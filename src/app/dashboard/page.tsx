@@ -13,8 +13,8 @@ export default function DashboardPage() {
       router.replace("/dashboard/admin");
     } else if (role === "manager") {
       router.replace("/dashboard/manager");
-    } else if (role === "staff") {
-      router.replace("/dashboard/staff");
+    } else if (role === "pharmacist") {
+      router.replace("/dashboard/pharmacist");
     }
   }, [router]);
 

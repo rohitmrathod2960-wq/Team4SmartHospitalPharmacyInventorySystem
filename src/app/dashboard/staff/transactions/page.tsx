@@ -29,12 +29,12 @@ type Activity = {
   date: string;
 };
 
-export default function StaffTransactionsPage() {
+export default function pharmacistTransactionsPage() {
 
   const [activity, setActivity] = useState<Activity[]>([]);
 
   /* ============================= */
-  /* FETCH STAFF ACTIVITY          */
+  /* FETCH pharmacist ACTIVITY          */
   /* ============================= */
 
   const fetchActivity = async () => {

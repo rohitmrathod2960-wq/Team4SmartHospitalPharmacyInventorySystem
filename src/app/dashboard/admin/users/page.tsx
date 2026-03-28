@@ -18,7 +18,7 @@ export default function UsersPage() {
 const [users,setUsers] = useState<User[]>([]);
 const [name,setName] = useState("");
 const [email,setEmail] = useState("");
-const [role,setRole] = useState("staff");
+const [role,setRole] = useState("pharmacist");
 
 const [editingUser,setEditingUser] = useState<User | null>(null);
 const [editName,setEditName] = useState("");
@@ -108,7 +108,7 @@ const openEdit = (user:User)=>{
 
 setEditingUser(user);
 setEditName(user.fullName || "");
-setEditRole(user.role || "staff");
+setEditRole(user.role || "pharmacist");
 
 };
 
@@ -203,7 +203,7 @@ className="border p-2 rounded"
 >
 
 <option value="manager">Manager</option>
-<option value="staff">Staff</option>
+<option value="pharmacist">pharmacist</option>
 
 </select>
 
@@ -324,7 +324,7 @@ className="border p-2 rounded w-full"
 >
 
 <option value="manager">Manager</option>
-<option value="staff">Staff</option>
+<option value="pharmacist">pharmacist</option>
 
 </select>
 

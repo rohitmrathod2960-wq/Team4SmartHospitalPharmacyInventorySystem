@@ -45,7 +45,7 @@ return;
 /* realistic quantity control */
 
 if(quantity < 1 || quantity > 2){
-alert("Staff can request only 1–2 units");
+alert("pharmacist can request only 1–2 units");
 return;
 }
 
@@ -70,7 +70,7 @@ quantity
 reason,
 deploymentDate,
 status:"pending",
-userId:user?.uid || "staff3", // ✅ dynamic user
+userId:user?.uid || "pharmacist", // ✅ dynamic user
 userEmail:user?.email || "unknown",
 createdAt:serverTimestamp() // ✅ better timestamp
 
@@ -90,7 +90,7 @@ type:"OUT",
 
 // ✅ IMPORTANT FEATURE
 reason:reason,
-performedBy:user?.email || "staff",
+performedBy:user?.email || "pharmacist",
 userId:user?.uid || null,
 ipAddress:"N/A",
 
@@ -170,7 +170,7 @@ className="border rounded p-2 w-32"
 />
 
 <p className="text-xs text-gray-500 mt-1">
-Staff may request maximum 2 units
+pharmacist may request maximum 2 units
 </p>
 
 </div>

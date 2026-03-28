@@ -27,7 +27,7 @@ import {
 
 import { db } from "@/lib/firebase";
 
-export default function StaffDashboard() {
+export default function pharmacistDashboard() {
 
   const router = useRouter();
 
@@ -36,7 +36,7 @@ export default function StaffDashboard() {
 
  
 /* -------------------------------------------------- */
-/* Fetch Assigned Equipment for Staff (FINAL FIX)     */
+/* Fetch Assigned Equipment for pharmacist (FINAL FIX)     */
 /* -------------------------------------------------- */
 
 useEffect(()=>{
@@ -135,7 +135,7 @@ useEffect(()=>{
 
 
   return (
-    <DashboardLayout role="staff" title="Personal Portal">
+    <DashboardLayout role="pharmacist" title="Personal Portal">
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
@@ -153,7 +153,7 @@ useEffect(()=>{
               <Button
                 variant="link"
                 className="text-primary font-semibold p-0"
-                onClick={()=>router.push("/dashboard/staff/assigned-equipment")}
+                onClick={()=>router.push("/dashboard/pharmacist/assigned-equipment")}
               >
                 View All
               </Button>
@@ -282,7 +282,7 @@ useEffect(()=>{
 
           </Card>
 
-          {/* Staff Alert View */}
+          {/* pharmacist Alert View */}
           <section>
 
             <h2 className="text-2xl font-bold tracking-tight mb-4 text-red-600">

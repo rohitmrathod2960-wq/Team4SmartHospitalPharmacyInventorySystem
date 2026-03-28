@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-export default function StaffProductsPage() {
+export default function pharmacistProductsPage() {
 
   const [products] = useState([
     { id: 1, name: "Standard Issue Radio", category: "Communication", qty: 18 },
@@ -41,7 +41,7 @@ export default function StaffProductsPage() {
         ],
 
         status: "pending",
-        userId: "staff1", // replace with logged in user later
+        userId: "pharmacist", // replace with logged in user later
         createdAt: Timestamp.now(),
 
       });

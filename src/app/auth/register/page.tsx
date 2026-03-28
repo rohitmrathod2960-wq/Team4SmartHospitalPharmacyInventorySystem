@@ -16,7 +16,7 @@ import { setDoc, doc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
 export default function RegisterPage() {
-  const [role, setRole] = useState<Role>('staff');
+  const [role, setRole] = useState<Role>('pharmacist');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -82,7 +82,7 @@ export default function RegisterPage() {
   const roleOptions = [
     { id: 'admin' as Role, label: 'Admin', icon: Shield, color: 'text-blue-600', bg: 'bg-blue-50' },
     { id: 'manager' as Role, label: 'Manager', icon: Briefcase, color: 'text-violet-600', bg: 'bg-violet-50' },
-    { id: 'staff' as Role, label: 'Staff', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { id: 'pharmacist' as Role, label: 'pharmacist', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   ];
 
   return (

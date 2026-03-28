@@ -2,11 +2,11 @@
 
 ## Core Features:
 
-- User Authentication: Secure user authentication with role-based access control (Admin, Manager, Staff) using JWT and bcrypt for password hashing.
+- User Authentication: Secure user authentication with role-based access control (Admin, Manager,pharmacist) using JWT and bcrypt for password hashing.
 - Forgot Password Flow: Implements a secure forgot password flow using OTP verification sent via email using Nodemailer.
-- Equipment Management: Admin and Manager roles can add, edit, and delete equipment, specifying details such as name, category, serial number, and quantity. Admin and Manager also have features for stock update and assign equipment, whereas the Staff can request it.
-- Role-Based Dashboards: Custom dashboards for Admin, Manager, and Staff roles providing relevant information and actions.
-- Equipment Assignment and Tracking: Track equipment assignments, status (Available/Assigned/Maintenance), and history within the system, enabling staff to view equipment.
+- Equipment Management: Admin and Manager roles can add, edit, and delete equipment, specifying details such as name, category, serial number, and quantity. Admin and Manager also have features for stock update and assign equipment, whereas the pharmacist can request it.
+- Role-Based Dashboards: Custom dashboards for Admin, Manager, and pharmacist roles providing relevant information and actions.
+- Equipment Assignment and Tracking: Track equipment assignments, status (Available/Assigned/Maintenance), and history within the system, enabling pharmacist to view equipment.
 - Reporting and Analytics: Managers can view reports on equipment usage, stock levels, and assignments to inform decision-making.
 - AI-Powered Predictive Maintenance Tool: Generative AI tool that helps predict equipment maintenance needs.  It considers equipment usage, historical failure data, and manufacturer specifications to generate maintenance schedules, helping prevent unexpected downtime and extend the lifespan of equipment. Managers can input or update these factors, influencing the suggestions.
 
