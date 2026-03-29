@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { formatUTCDateTime } from "@/lib/utils";
 import ManagerGuard from "@/components/dashboard/ManagerGuard";
 
 type Transaction = {
@@ -77,7 +78,7 @@ export default function TransactionsPage() {
                 transactions.map(t => {
 
                   const date = t.createdAt?.toDate
-                    ? t.createdAt.toDate().toLocaleString()
+                    ? formatUTCDateTime(t.createdAt.toDate())
                     : "Unknown";
 
                   return (

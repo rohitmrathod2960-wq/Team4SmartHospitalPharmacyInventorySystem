@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { resolveName } from "@/lib/utils";
 import ManagerGuard from "@/components/dashboard/ManagerGuard";
 
 export default function ProductPage() {
@@ -11,95 +12,51 @@ export default function ProductPage() {
   const [categories, setCategories] = useState<any[]>([]);
 
   const defaultProducts = [
-
     {
-      name: "Standard Issue Radio",
-      category: "Communication",
-      quantity: 30,
-      assigned: 0,
-      lowStockThreshold: 5
+      name: "Amoxicillin 250mg",
+      medicineName: "Amoxicillin 250mg",
+      category: "Capsule",
+      categoryId: "cat_capsule",
+      sku: "AMX-250",
+      price: 45,
+      quantity: 200,
+      lowStockThreshold: 20,
+      serialTracked: false,
+      status: "in_stock",
+      supplier: "Vikram Shetty",
+      expiryDate: new Date("2027-03-18T00:00:00Z"),
+      createdAt: new Date()
     },
-
     {
-      name: "Tactical Vest (L)",
-      category: "Armor",
-      quantity: 18,
-      assigned: 0,
-      lowStockThreshold: 6
+      name: "Paracetamol 500mg",
+      medicineName: "Paracetamol 500mg",
+      category: "Tablet",
+      categoryId: "cat_tablet",
+      sku: "PCM-500",
+      price: 20,
+      quantity: 150,
+      lowStockThreshold: 25,
+      serialTracked: false,
+      status: "in_stock",
+      supplier: "Vikram Shetty",
+      expiryDate: new Date("2027-08-30T00:00:00Z"),
+      createdAt: new Date()
     },
-
     {
-      name: "NVGs Gen 3",
-      category: "Optics",
-      quantity: 23,
-      assigned: 0,
-      lowStockThreshold: 8
-    },
-
-    {
-      name: "Ballistic Helmet",
-      category: "Armor",
-      quantity: 25,
-      assigned: 0,
-      lowStockThreshold: 5
-    },
-
-    {
-      name: "Satcom Transceiver",
-      category: "Communication",
-      quantity: 17,
-      assigned: 0,
-      lowStockThreshold: 10
-    },
-
-    {
-      name: "Level IV Plates",
-      category: "Armor",
-      quantity: 15,
-      assigned: 0,
-      lowStockThreshold: 5
-    },
-
-    {
-      name: "Tactical Drone v4",
-      category: "UAV",
-      quantity: 26,
-      assigned: 0,
-      lowStockThreshold: 7
-    },
-
-    {
-      name: "Night Vision Gen 3",
-      category: "Optics",
-      quantity: 20,
-      assigned: 0,
-      lowStockThreshold: 5
-    },
-
-    {
-      name: "Field Medical Kit",
-      category: "Medical",
-      quantity: 40,
-      assigned: 0,
-      lowStockThreshold: 10
-    },
-
-    {
-      name: "Combat Boots",
-      category: "Gear",
-      quantity: 50,
-      assigned: 0,
-      lowStockThreshold: 15
-    },
-
-    {
-      name: "Combat Tactical Vehicle Kit",
-      category: "Vehicles",
-      quantity: 4,
-      assigned: 0,
-      lowStockThreshold: 5
+      name: "Aspirin 75mg",
+      medicineName: "Aspirin 75mg",
+      category: "Tablet",
+      categoryId: "cat_tablet",
+      sku: "ASP-075",
+      price: 35,
+      quantity: 120,
+      lowStockThreshold: 30,
+      serialTracked: false,
+      status: "in_stock",
+      supplier: "Vikram Shetty",
+      expiryDate: new Date("2028-02-03T00:00:00Z"),
+      createdAt: new Date()
     }
-
   ];
 
   const fetchData = async () => {
@@ -135,9 +92,7 @@ export default function ProductPage() {
 
     if (product.categoryId) {
       const cat = categories.find(c => c.id === product.categoryId);
-      if (cat) return cat.name;
-    }
-
+      if (cat) return cat.name ?? cat.medicineName;
     if (product.category) {
       return product.category;
     }
@@ -204,7 +159,7 @@ export default function ProductPage() {
                     <tr key={p.id} className="border-b hover:bg-gray-50">
 
                       <td className="p-3 font-medium">
-                        {p.name}
+                        {resolveName(p)}
                       </td>
 
                       <td>

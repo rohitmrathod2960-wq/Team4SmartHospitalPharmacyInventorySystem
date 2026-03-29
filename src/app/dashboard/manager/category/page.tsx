@@ -39,7 +39,7 @@ export default function CategoryPage() {
   const filteredCategories = !filter
     ? categories
     : categories.filter(cat =>
-        cat.name?.toLowerCase().includes(filter.toLowerCase())
+        (cat.name ?? cat.medicineName)?.toLowerCase().includes(filter.toLowerCase())
       );
 
   return (
@@ -109,7 +109,7 @@ export default function CategoryPage() {
                   <tr key={cat.id} className="border-b hover:bg-gray-50">
 
                     <td className="p-3 font-medium">
-                      {cat.name}
+                      {cat.name ?? cat.medicineName}
                     </td>
 
                     <td>

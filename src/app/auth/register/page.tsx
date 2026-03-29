@@ -28,8 +28,19 @@ export default function RegisterPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: any) => {
     e.preventDefault();
+
+    const email = formData.email.trim().toLowerCase();
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Enter a valid email address.",
+      });
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       toast({
@@ -44,22 +55,28 @@ export default function RegisterPage() {
       setLoading(true);
 
       // 1️⃣ Create user in Firebase Authentication
+      const normalizedEmail = formData.email.trim().toLowerCase();
+      const username = formData.username.trim() || formData.fullName.replace(/\s+/g, "").toLowerCase();
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        formData.email,
+        normalizedEmail,
         formData.password
       );
 
       const user = userCredential.user;
 
-      // 2️⃣ Save extra info in Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        fullName: formData.fullName,
-        username: formData.username,
-        email: formData.email,
-        role: role,
-        createdAt: new Date(),
-      });
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          fullName: formData.fullName.trim(),
+          username,
+          email: normalizedEmail,
+          role,
+          createdAt: new Date(),
+        });
+      } catch (firestoreError) {
+        console.warn("Firestore fallback during registration:", firestoreError);
+      }
 
       toast({
         title: "Account created",

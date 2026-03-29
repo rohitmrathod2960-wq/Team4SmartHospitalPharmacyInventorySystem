@@ -7,6 +7,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { resolveName } from "@/lib/utils";
 import ManagerGuard from "@/components/dashboard/ManagerGuard";
 
 export default function StockPage() {
@@ -79,7 +80,7 @@ export default function StockPage() {
                     <tr key={product.id} className="border-b hover:bg-gray-50">
 
                       <td className="p-3 font-medium">
-                        {product.name}
+                        {resolveName(product)}
                       </td>
 
                       <td>

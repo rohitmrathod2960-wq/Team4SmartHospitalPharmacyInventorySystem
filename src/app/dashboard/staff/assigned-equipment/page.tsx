@@ -10,6 +10,7 @@ doc
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { formatUTCDate } from "@/lib/utils";
 
 export default function AssignedMedicinePage(){
 
@@ -92,7 +93,7 @@ alert("Damage report submitted");
 const viewHistory = (item:any)=>{
 
 const issuedDate = item.issuedDate?.seconds
-? new Date(item.issuedDate.seconds*1000).toLocaleDateString()
+? formatUTCDate(new Date(item.issuedDate.seconds * 1000))
 : "Unknown";
 
 alert(
@@ -180,7 +181,7 @@ View History
 <p className="text-sm text-gray-500">
 
 Issued Date: {assign.issuedDate?.seconds
-? new Date(assign.issuedDate.seconds*1000).toLocaleDateString()
+? formatUTCDate(new Date(assign.issuedDate.seconds * 1000))
 : "Unknown"}
 
 </p>

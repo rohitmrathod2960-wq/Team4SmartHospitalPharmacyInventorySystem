@@ -3,6 +3,7 @@
 import { useEffect,useState } from "react";
 import { collection,getDocs,updateDoc,doc,addDoc,getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { formatUTCDate } from "@/lib/utils";
 
 export default function OrdersPage(){
 
@@ -116,7 +117,7 @@ Medicine Requests
 <p>
 <b>Requested Date:</b>{" "}
 {order.createdAt
-? new Date(order.createdAt.seconds * 1000).toLocaleDateString()
+? formatUTCDate(new Date(order.createdAt.seconds * 1000))
 : "N/A"}
 </p>
 

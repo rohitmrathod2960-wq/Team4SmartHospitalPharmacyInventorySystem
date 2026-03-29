@@ -12,7 +12,7 @@ import { Role } from '@/lib/types';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { auth, db } from "@/lib/firebase";
-import { doc, updateDoc, serverTimestamp, getDoc } from "firebase/firestore";
+import { collection, doc, query, where, getDocs, updateDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default function SignInPage() {
@@ -25,53 +25,70 @@ export default function SignInPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: any) => {
 
     e.preventDefault();
     setLoading(true);
 
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Failed",
+        description: "Enter a valid email address.",
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
 
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
+      const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
       const user = userCredential.user;
 
-      await updateDoc(doc(db, "users", user.uid), {
-        lastLogin: serverTimestamp()
-      });
+      let userRole: Role = role;
 
-      const userDoc = await getDoc(doc(db, "users", user.uid));
+      try {
+        await updateDoc(doc(db, "users", user.uid), {
+          lastLogin: serverTimestamp()
+        });
 
-      if (!userDoc.exists()) {
-        throw new Error("User data not found.");
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData?.role) {
+            userRole = userData.role as Role;
+          }
+        }
+      } catch (firestoreError) {
+        console.warn("Firestore fallback during sign in:", firestoreError);
       }
-
-      const userData = userDoc.data();
 
       localStorage.setItem(
         "user_session",
         JSON.stringify({
           uid: user.uid,
           email: user.email,
-          role: userData.role
+          role: userRole,
         })
       );
+      localStorage.setItem("role", userRole);
 
       toast({
         title: "Sign in successful",
-        description: `Welcome back, ${userData.role}.`,
+        description: `Welcome back, ${userRole}.`,
       });
 
-      router.push(`/dashboard/${userData.role}`);
+      router.push(`/dashboard/${userRole}`);
 
     } catch (error: any) {
-
       toast({
         variant: "destructive",
         title: "Authentication Failed",
         description: error.message || "Incorrect email or password.",
       });
-
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@
 import { useEffect,useState } from "react";
 import { collection,getDocs,addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { resolveName } from "@/lib/utils";
 
 export default function CartPage(){
 
@@ -53,7 +54,7 @@ await addDoc(collection(db,"orders"),{
 
 items:[{
 productId:productId,
-productName:product?.name,
+productName:resolveName(product),
 quantity
 }],
 
@@ -108,7 +109,7 @@ className="border rounded p-2 w-full"
 {products.map(p=>(
 
 <option key={p.id} value={p.id}>
-{p.name}
+{resolveName(p)}
 </option>
 
 ))}

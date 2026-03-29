@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { resolveName } from "@/lib/utils";
 import ManagerGuard from "@/components/dashboard/ManagerGuard";
 
 import {
@@ -87,6 +88,9 @@ export default function ReportsPage() {
           lowStock
         });
 
+      },
+      (error) => {
+        console.error("Firestore listener error:", error);
       }
     );
 
@@ -112,6 +116,9 @@ export default function ReportsPage() {
 
         setTransactions(transData);
 
+      },
+      (error) => {
+        console.error("Firestore listener error:", error);
       }
     );
 
@@ -126,7 +133,7 @@ export default function ReportsPage() {
 
   const stockChart = products.map(p => ({
 
-    name: p.name,
+    name: resolveName(p),
 
     quantity: p.quantity ?? p.qty ?? 0
 

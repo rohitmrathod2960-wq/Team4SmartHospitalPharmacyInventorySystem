@@ -26,6 +26,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { formatUTCDate, resolveName, resolveQuantity, resolveLowStockThreshold } from "@/lib/utils";
 
 export default function pharmacistDashboard() {
 
@@ -54,26 +55,32 @@ useEffect(()=>{
       orderBy("createdAt","desc")
     );
 
-    unsubscribeSnapshot = onSnapshot(q,(snap)=>{
+    unsubscribeSnapshot = onSnapshot(
+      q,
+      (snap) => {
 
-      const allData = snap.docs.map(doc=>({
-        id:doc.id,
-        ...doc.data()
-      }));
+        const allData = snap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
 
-      // ✅ FILTER BASED ON LOGGED IN USER
-      const filtered = allData.filter((item:any)=>{
+        // ✅ FILTER BASED ON LOGGED IN USER
+        const filtered = allData.filter((item:any) => {
 
-        return (
-          item.userId === user.uid ||
-          item.userEmail === user.email
-        );
+          return (
+            item.userId === user.uid ||
+            item.userEmail === user.email
+          );
 
-      });
+        });
 
-      setMyMedicine(filtered.slice(0,2));
+        setMyMedicine(filtered.slice(0,2));
 
-    });
+      },
+      (error) => {
+        console.error("Firestore listener error:", error);
+      }
+    );
 
   });
 
@@ -102,8 +109,8 @@ useEffect(()=>{
 
     const filtered = products.filter((p:any)=>{
 
-      const quantity = p.quantity ?? p.qty ?? 0;
-      const threshold = p.lowStockThreshold ?? p.lowStock ?? 5;
+      const quantity = resolveQuantity(p);
+      const threshold = resolveLowStockThreshold(p);
 
       return quantity <= threshold;
 
@@ -111,12 +118,12 @@ useEffect(()=>{
 
     const alertsData = filtered.map((p:any)=>{
 
-      const quantity = p.quantity ?? p.qty ?? 0;
-      const threshold = p.lowStockThreshold ?? p.lowStock ?? 5;
+      const quantity = resolveQuantity(p);
+      const threshold = resolveLowStockThreshold(p);
 
       return {
         id:p.id,
-        productName:p.name,
+        productName:resolveName(p),
         quantity:quantity,
         threshold:threshold,
         message:"Stock level below threshold. Please notify inventory manager."
@@ -213,7 +220,7 @@ useEffect(()=>{
                           <span>
                             Issued: {
                               item.createdAt?.toDate
-                              ? item.createdAt.toDate().toLocaleDateString()
+                              ? formatUTCDate(item.createdAt.toDate())
                               : "-"
                             }
                           </span>
