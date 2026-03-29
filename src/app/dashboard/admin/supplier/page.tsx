@@ -45,22 +45,24 @@ const [editingSupplier,setEditingSupplier] = useState<any>(null);
 
 useEffect(()=>{
 
-const unsub = onSnapshot(collection(db,"suppliers"),(snap)=>{
+  const unsub = onSnapshot(
+    collection(db, "suppliers"),
+    (snap)=>{
+      setSuppliers(
+        snap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+      );
+    },
+    (error) => {
+      console.error("Firestore listener error:", error);
+    }
+  );
 
-setSuppliers(
-snap.docs.map(doc=>({
-id:doc.id,
-...doc.data()
-}))
-)
+  return () => unsub();
 
-})
-
-return ()=>unsub()
-
-},[])
-
-
+},[]);
 
 /* ADD SUPPLIER */
 
@@ -304,5 +306,5 @@ Save
 </div>
 
 )
-
 }
+    

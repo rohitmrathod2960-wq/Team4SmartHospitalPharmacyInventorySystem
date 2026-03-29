@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { collection, getDocs, setDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { initializeApp, getApps } from "firebase/app";
+import { createUserWithEmailAndPassword, getAuth, signOut } from "firebase/auth";
+import { firebaseConfig, db } from "@/lib/firebase";
+import { formatUTCDate } from "@/lib/utils";
 
 type User = {
   id: string;
@@ -18,6 +21,7 @@ export default function UsersPage() {
 const [users,setUsers] = useState<User[]>([]);
 const [name,setName] = useState("");
 const [email,setEmail] = useState("");
+const [password,setPassword] = useState("");
 const [role,setRole] = useState("pharmacist");
 
 const [editingUser,setEditingUser] = useState<User | null>(null);
@@ -57,23 +61,48 @@ return ()=>clearInterval(interval);
 },[]);
 
 
+const getSecondaryAuth = () => {
+  const secondaryApp = getApps().find((app) => app.name === "secondary") || initializeApp(firebaseConfig, "secondary");
+  return getAuth(secondaryApp);
+};
+
 const handleCreate = async () => {
 
-if(!name || !email) return;
+  if (!name || !email || !password) {
+    alert("Please provide name, email, and password for the new user.");
+    return;
+  }
 
-await addDoc(collection(db,"users"),{
-fullName:name,
-email,
-role,
-status:"active",
-createdAt:new Date(),
-lastLogin:null
-});
+  const secondaryAuth = getSecondaryAuth();
 
-setName("");
-setEmail("");
+  try {
+    const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+    const uid = userCredential.user.uid;
 
-fetchUsers();
+    await setDoc(doc(db, "users", uid), {
+      fullName: name,
+      username: name.replace(/\s+/g, "").toLowerCase(),
+      email,
+      role,
+      status: "active",
+      createdAt: new Date(),
+      lastLogin: null,
+    });
+
+    setName("");
+    setEmail("");
+    setPassword("");
+
+    fetchUsers();
+  } catch (error: any) {
+    alert(`Could not create user: ${error.message || error}`);
+  } finally {
+    try {
+      await signOut(getSecondaryAuth());
+    } catch {
+      // ignore secondary auth cleanup errors
+    }
+  }
 
 };
 
@@ -162,7 +191,7 @@ if(hours < 24) return `${hours} hour${hours>1?"s":""} ago`;
 if(days === 1) return "Yesterday";
 if(days < 7) return `${days} days ago`;
 
-return loginDate.toLocaleDateString();
+return formatUTCDate(loginDate);
 
 }catch{
 return "Unknown";
@@ -196,12 +225,21 @@ onChange={e=>setEmail(e.target.value)}
 className="border p-2 rounded"
 />
 
+<input
+placeholder="Password"
+type="password"
+value={password}
+onChange={e=>setPassword(e.target.value)}
+className="border p-2 rounded"
+/>
+
 <select
 value={role}
 onChange={e=>setRole(e.target.value)}
 className="border p-2 rounded"
 >
 
+<option value="admin">Admin</option>
 <option value="manager">Manager</option>
 <option value="pharmacist">Pharmacist</option>
 

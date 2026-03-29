@@ -15,7 +15,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { cn, formatUTCDateTime } from "@/lib/utils";
 
 /* 🔹 FIREBASE */
 import { collection, getDocs } from "firebase/firestore";
@@ -59,7 +59,7 @@ export default function pharmacistTransactionsPage() {
           item: item.productName,
           status: "completed",
           date: data.issuedDate?.seconds
-            ? new Date(data.issuedDate.seconds*1000).toLocaleString()
+            ? formatUTCDateTime(new Date(data.issuedDate.seconds * 1000))
             : "Unknown"
         });
 
@@ -84,7 +84,7 @@ export default function pharmacistTransactionsPage() {
         item: data.productName,
         status: "completed",
         date: data.returnedAt?.seconds
-          ? new Date(data.returnedAt.seconds*1000).toLocaleString()
+          ? formatUTCDateTime(new Date(data.returnedAt.seconds * 1000))
           : "Unknown"
       });
 
@@ -109,7 +109,7 @@ export default function pharmacistTransactionsPage() {
           item: item.productName,
           status: data.status || "pending",
           date: data.createdAt?.seconds
-            ? new Date(data.createdAt.seconds*1000).toLocaleString()
+            ? formatUTCDateTime(new Date(data.createdAt.seconds * 1000))
             : "Unknown"
         });
 

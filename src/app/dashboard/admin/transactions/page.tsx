@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatUTCDateTime } from "@/lib/utils";
 
 import {
   collection,
@@ -58,15 +58,19 @@ export default function TransactionsPage() {
       orderBy("createdAt", "desc")
     );
 
-    const unsubscribe = onSnapshot(q, (snap) => {
+    const unsubscribe = onSnapshot(
+      q,
+      (snap) => {
 
-      const data: Transaction[] = snap.docs.map(doc => ({
+        const data: Transaction[] = snap.docs.map(doc => ({
         id: doc.id,   // ✅ unique ID from Firestore
         ...(doc.data() as Omit<Transaction, "id">)
       }));
 
       setTransactions(data);
 
+    }, (error) => {
+      console.error("Firestore listener error:", error);
     });
 
     return () => unsubscribe();
@@ -141,7 +145,7 @@ export default function TransactionsPage() {
                 filtered.map((t) => {
 
                   const date = t.createdAt?.toDate
-                    ? t.createdAt.toDate().toLocaleString()
+                    ? formatUTCDateTime(t.createdAt.toDate())
                     : "Unknown";
 
                   return (

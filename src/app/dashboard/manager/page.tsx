@@ -74,24 +74,30 @@ export default function ManagerDashboard() {
       limit(5)
     );
 
-    const unsub = onSnapshot(q,(snap)=>{
+    const unsub = onSnapshot(
+      q,
+      (snap)=>{
 
-      const data = snap.docs.map(doc=>{
+        const data = snap.docs.map(doc=>{
 
-        const d:any = doc.data();
+          const d:any = doc.data();
 
-        return {
-          id:doc.id,
-          type:d.type,
-          message:d.message,
-          createdAt:d.createdAt
-        }
+          return {
+            id:doc.id,
+            type:d.type,
+            message:d.message,
+            createdAt:d.createdAt
+          }
 
-      });
+        });
 
-      setActivity(data);
+        setActivity(data);
 
-    });
+      },
+      (error) => {
+        console.error("Firestore listener error:", error);
+      }
+    );
 
     return ()=>unsub();
 

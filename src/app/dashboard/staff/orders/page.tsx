@@ -3,6 +3,7 @@
 import { useEffect,useState } from "react";
 import { collection,getDocs,updateDoc,doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { formatUTCDate } from "@/lib/utils";
 
 export default function pharmacistOrdersPage(){
 
@@ -77,7 +78,7 @@ Qty: {item.quantity}
 {/* NEW FIELD */}
 <p className="text-sm text-gray-500">
 Requested: {order.createdAt?.seconds
-? new Date(order.createdAt.seconds*1000).toLocaleDateString()
+? formatUTCDate(new Date(order.createdAt.seconds * 1000))
 : "Unknown"}
 </p>
 

@@ -15,6 +15,7 @@ import {
 
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { resolveName } from "@/lib/utils";
 
 /* ============================= */
 /*   PHARMACY REPORT (DYNAMIC)    */
@@ -45,7 +46,7 @@ export default function AdminReportsPage() {
 
         return {
           sku: p.sku,
-          name: p.name,
+          name: resolveName(p),
           category: p.category,
           supplier: p.supplier,
           current: p.quantity,

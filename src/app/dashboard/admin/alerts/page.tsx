@@ -15,6 +15,7 @@ import {
 
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { resolveName } from "@/lib/utils";
 
 export default function LowStockAlerts() {
 
@@ -160,7 +161,7 @@ export default function LowStockAlerts() {
                         <TableCell>{index + 1}</TableCell>
 
                         <TableCell className="font-medium">
-                          {item.name}
+                          {resolveName(item)}
                         </TableCell>
 
                         <TableCell>
@@ -189,7 +190,7 @@ export default function LowStockAlerts() {
                             <button
                               onClick={() =>
                                 handleMailTrigger(
-                                  item.name,
+                                  resolveName(item),
                                   quantity,
                                   item.supplier
                                 )

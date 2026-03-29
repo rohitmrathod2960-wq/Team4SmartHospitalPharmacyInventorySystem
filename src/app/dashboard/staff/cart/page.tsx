@@ -4,6 +4,7 @@ import { useEffect,useState } from "react";
 import { collection,getDocs,addDoc, serverTimestamp } from "firebase/firestore"; // ✅ added
 import { db } from "@/lib/firebase";
 import { getAuth } from "firebase/auth"; // ✅ added
+import { resolveName } from "@/lib/utils";
 
 export default function CartPage(){
 
@@ -63,11 +64,7 @@ await addDoc(collection(db,"orders"),{
 
 items:[{
 productId:productId,
-productName:product?.name,
-quantity
-}],
-
-reason,
+productName:resolveName(product),
 deploymentDate,
 status:"pending",
 userId:user?.uid || "pharmacist", // ✅ dynamic user
@@ -84,10 +81,7 @@ createdAt:serverTimestamp() // ✅ better timestamp
 await addDoc(collection(db,"transactions"),{
 
 productId:productId,
-productName:product?.name,
-quantity,
-type:"OUT",
-
+productName:resolveName(product),
 // ✅ IMPORTANT FEATURE
 reason:reason,
 performedBy:user?.email || "pharmacist",
@@ -142,7 +136,7 @@ className="border rounded p-2 w-full"
 {products.map(p=>(
 
 <option key={p.id} value={p.id}>
-{p.name}
+{resolveName(p)}
 </option>
 
 ))}
