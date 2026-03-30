@@ -24,6 +24,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { any } from "zod";
 
 export default function AdminProductPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -38,7 +39,7 @@ export default function AdminProductPage() {
   const [image, setImage] = useState("");
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [successMsg, setSuccessMsg] = useState("");
-
+  const [expiryDate, setExpiryDate] = useState("");
   const fetchProducts = async () => {
     const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);
@@ -80,6 +81,7 @@ export default function AdminProductPage() {
     setLowStock("");
     setSerialTracked(false);
     setImage("");
+    setExpiryDate("");
   };
 
   const showSuccess = (message: string) => {
@@ -101,8 +103,7 @@ export default function AdminProductPage() {
       serialTracked,
       status: Number(qty) <= Number(lowStock) ? "low_stock" : "in_stock",
       createdAt: serverTimestamp(),
-      expiryDate: null,
-      image: image.trim(),
+      expiryDate: expiryDate ? new Date(expiryDate) : null,
     });
 
     clearForm();
@@ -140,8 +141,7 @@ export default function AdminProductPage() {
       lowStockThreshold: Number(lowStock) || 0,
       serialTracked,
       status: Number(qty) <= Number(lowStock) ? "low_stock" : "in_stock",
-      expiryDate: null,
-      image: image.trim(),
+      expiryDate: expiryDate ? new Date(expiryDate) : null,
       updatedAt: serverTimestamp(),
     };
 
@@ -191,7 +191,13 @@ export default function AdminProductPage() {
               <Input placeholder="Qty" value={qty} onChange={e => setQty(e.target.value)} className="w-20 rounded-lg" type="number" />
 
               <Input placeholder="Low stock threshold" value={lowStock} onChange={e => setLowStock(e.target.value)} className="w-28 rounded-lg" type="number" />
-
+              <input
+              type="date"
+              value={expiryDate}
+              onChange={(e) => setExpiryDate(e.target.value)}
+              className="border p-2 rounded"
+              placeholder="Expiry Date"
+              />
               <Input type="file" onChange={(e:any)=>setImage(e.target.files[0]?.name)} className="w-40"/>
 
               <label className="flex items-center gap-2 text-sm">
@@ -228,6 +234,7 @@ export default function AdminProductPage() {
                   <TableHead className="text-white font-bold text-lg">Supplier</TableHead>
                   <TableHead className="text-white font-bold text-lg">Qty</TableHead>
                   <TableHead className="text-white font-bold text-lg">Low stock threshold</TableHead>
+                  <TableHead className="text-white font-bold text-lg">Expiry Date</TableHead>
                   <TableHead className="text-white font-bold text-lg">Serial Tracked</TableHead>
                   <TableHead className="text-white font-bold text-lg">Action</TableHead>
 
@@ -258,6 +265,7 @@ export default function AdminProductPage() {
                       <TableCell>{product.supplier}</TableCell>
                       <TableCell>{product.quantity ?? 0}</TableCell>
                      <TableCell>{product.lowStockThreshold ?? 0}</TableCell>
+                      <TableCell>{product.expiryDate ? new Date(product.expiryDate.seconds * 1000).toLocaleDateString() : "N/A"}</TableCell>
                       <TableCell>{product.serialTracked ? "Yes" : "No"}</TableCell>
 
                       <TableCell className="flex gap-2">

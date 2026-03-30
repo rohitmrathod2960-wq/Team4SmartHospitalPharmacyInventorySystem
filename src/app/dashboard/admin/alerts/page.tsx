@@ -22,6 +22,7 @@ export default function LowStockAlerts() {
   const [mailQty, setMailQty] = useState("1200");
 
   const [data, setData] = useState<any[]>([]);
+  const [expiryData, setExpiryData] = useState<any[]>([]);
 
   /* ============================= */
   /* FETCH LOW STOCK PRODUCTS      */
@@ -48,10 +49,36 @@ export default function LowStockAlerts() {
     setData(filtered);
 
   };
+  const fetchExpiryAlerts = async () => {
+  const snap = await getDocs(collection(db, "products"));
+
+  const today = new Date();
+  const next3Days = new Date();
+  next3Days.setDate(today.getDate() + 3);
+
+  const products = snap.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  const filtered = products.filter((p: any) => {
+    if (!p.expiryDate) return false;
+
+    const expiry = p.expiryDate?.toDate
+      ? p.expiryDate.toDate()
+      : new Date(p.expiryDate);
+
+    return expiry <= next3Days; // includes expired + upcoming
+  });
+
+  setExpiryData(filtered);
+};
 
   useEffect(() => {
     fetchLowStock();
+    fetchExpiryAlerts();
   }, []);
+  
 
   /* ============================== */
   /* MAIL TRIGGER FUNCTION          */
@@ -97,9 +124,10 @@ export default function LowStockAlerts() {
 
   return (
 
-    <div className="bg-slate-100 min-h-screen p-6">
-
-      <Card className="shadow-xl rounded-2xl border-none bg-white">
+    <div className="bg-slate-100 min-h-screen p-6 flex flex-col">
+     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
+      <div>
+      <Card className="flex flex-col h-full">
 
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-red-700">
@@ -107,10 +135,10 @@ export default function LowStockAlerts() {
           </CardTitle>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="flex-1 flex flex-col">
 
-          <div className="overflow-x-auto rounded-xl">
-
+          <div className="flex-1 overflow-auto">
+          
             <Table>
 
               <TableHeader>
@@ -231,7 +259,122 @@ export default function LowStockAlerts() {
       </Card>
 
     </div>
+<div>
+        <Card className="shadow-xl rounded-2xl border-none bg-white flex flex-col h-full">
 
-  );
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-orange-600">
+              Expiry Alerts
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="flex-1 flex flex-col">
+
+            {<div className="flex-1 overflow-auto rounded-xl">
+
+  <Table>
+
+    <TableHeader>
+      <TableRow className="bg-orange-600 hover:bg-orange-600">
+
+        <TableHead className="text-white">#</TableHead>
+        <TableHead className="text-white">Product</TableHead>
+        <TableHead className="text-white">Category</TableHead>
+        <TableHead className="text-white">Supplier</TableHead>
+        <TableHead className="text-white text-center">Expiry Date</TableHead>
+        <TableHead className="text-white text-center">Status</TableHead>
+
+      </TableRow>
+    </TableHeader>
+
+    <TableBody>
+
+      {expiryData.length === 0 ? (
+
+        // ✅ EMPTY STATE
+        <TableRow>
+          <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+            No Expiry Medicines 🚫
+          </TableCell>
+        </TableRow>
+
+      ) : (
+
+        expiryData.map((item, index) => {
+
+          const expiry = item.expiryDate?.toDate
+            ? item.expiryDate.toDate()
+            : new Date(item.expiryDate);
+
+          const today = new Date();
+          const diffDays = Math.ceil(
+            (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+          );
+
+          const isExpired = diffDays < 0;
+
+          return (
+
+            <TableRow key={item.id} className="hover:bg-orange-50">
+
+              <TableCell>{index + 1}</TableCell>
+
+              <TableCell className="font-medium">
+                {resolveName(item)}
+              </TableCell>
+
+              <TableCell>{item.category}</TableCell>
+
+              <TableCell>{item.supplier}</TableCell>
+
+              <TableCell className="text-center">
+                {expiry.toLocaleDateString()}
+              </TableCell>
+
+              <TableCell className="text-center">
+
+                <span
+                  className={`px-3 py-1 rounded text-white text-sm ${
+                    isExpired
+                      ? "bg-red-600"
+                      : diffDays <= 3
+                      ? "bg-orange-500"
+                      : "bg-green-500"
+                  }`}
+                >
+                  {isExpired
+                    ? "Expired"
+                    : diffDays <= 3
+                    ? "Expiring Soon"
+                    : "Safe"}
+                </span>
+
+              </TableCell>
+
+            </TableRow>
+
+          );
+
+        })
+
+      )}
+
+    </TableBody>
+
+  </Table>
+
+</div>}
+
+          </CardContent>
+
+        </Card>
+      </div>
+
+    </div>
+    {/* GRID END */}
+
+  </div>
+);
+  
 
 }

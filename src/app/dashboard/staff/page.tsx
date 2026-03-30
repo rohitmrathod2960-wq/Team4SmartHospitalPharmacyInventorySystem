@@ -33,6 +33,7 @@ export default function pharmacistDashboard() {
   const router = useRouter();
 
   const [alerts,setAlerts] = useState<any[]>([]);
+  const [expiryAlerts,setExpiryAlerts] = useState<any[]>([]);
   const [myMedicine,setMyMedicine] = useState<any[]>([]);
 
  
@@ -91,7 +92,54 @@ useEffect(()=>{
 
 },[]);
 
+useEffect(()=>{
 
+  const fetchExpiryAlerts = async ()=>{
+
+    const snap = await getDocs(collection(db,"products"));
+
+    const today = new Date();
+    const next3Days = new Date();
+    next3Days.setDate(today.getDate() + 3);
+
+    const products = snap.docs.map(doc=>({
+      id:doc.id,
+      ...doc.data()
+    }));
+
+    const filtered = products.filter((p:any)=>{
+
+      if (!p.expiryDate) return false;
+
+      const expiry = p.expiryDate?.toDate
+        ? p.expiryDate.toDate()
+        : new Date(p.expiryDate);
+
+      return expiry <= next3Days;
+
+    });
+
+    const formatted = filtered.map((p:any)=>{
+
+      const expiry = p.expiryDate?.toDate
+        ? p.expiryDate.toDate()
+        : new Date(p.expiryDate);
+
+      return {
+        id:p.id,
+        medicineName:resolveName(p),
+        expiryDate:expiry.toLocaleDateString()
+      };
+
+    });
+
+    setExpiryAlerts(formatted);
+
+  };
+
+  fetchExpiryAlerts();
+
+},[]);
 /* -------------------------------------------------- */
 /* AUTO GENERATE LOW STOCK ALERTS                    */
 /* -------------------------------------------------- */
@@ -332,7 +380,48 @@ useEffect(()=>{
               </CardContent>
 
             </Card>
+           {/* ================= EXPIRY ALERTS ================= */}
 
+<h2 className="text-2xl font-bold tracking-tight mb-4 text-orange-600 mt-6">
+  Expiry Alerts
+</h2>
+
+<Card className="border-none shadow-sm rounded-2xl overflow-hidden">
+
+  <CardContent className="p-6 space-y-4">
+
+    {expiryAlerts.length === 0 ? (
+
+      <p className="text-sm text-muted-foreground">
+        No Expired Medicines 🚫
+      </p>
+
+    ) : (
+
+      expiryAlerts.map((item:any)=>(
+
+        <div
+          key={item.id}
+          className="p-4 bg-orange-50 border-l-4 border-orange-500 rounded-r-xl"
+        >
+
+          <p className="text-sm font-bold text-orange-800">
+            {item.medicineName}
+          </p>
+
+          <p className="text-xs text-orange-700 mt-1">
+            Expiry Date: {item.expiryDate}
+          </p>
+
+        </div>
+
+      ))
+
+    )}
+
+  </CardContent>
+
+</Card>
           </section>
 
         </div>
@@ -384,16 +473,16 @@ useEffect(()=>{
 
           <Card className="border-none shadow-sm rounded-2xl">
 
-            <CardHeader>
+            {/* <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-orange-500" />
-                Maintenance Alerts
+                ts
               </CardTitle>
-            </CardHeader>
+            </CardHeader> */}
 
             <CardContent className="space-y-4">
 
-              <div className="p-3 bg-orange-50 border-l-4 border-orange-500 rounded-r-xl">
+              {/* <div className="p-3 bg-orange-50 border-l-4 border-orange-500 rounded-r-xl">
                 <p className="text-xs font-bold text-orange-800">
                   Radio RAD-012 Due
                 </p>
@@ -402,11 +491,11 @@ useEffect(()=>{
                   Scheduled service in 3 days. Please return to armory by 20th.
                 </p>
 
-              </div>
+              </div> */}
 
-              <p className="text-[10px] text-center text-muted-foreground italic">
-                No other urgent maintenance required.
-              </p>
+              {/* <p className="text-[10px] text-center text-muted-foreground italic">
+                No other urgent  required.
+              </p> */}
 
             </CardContent>
 

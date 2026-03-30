@@ -20,10 +20,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Medicine } from '@/lib/types';
 //////////////////////////////////////////////////////////////////////////////////////////////
 const MOCK_INVENTORY: Medicine[] = [
-  { id: '1', medicineName: 'M1 Abrams Optic', category: 'Heavy Machinery', serialNumber: 'SN-90210', quantity: 12, minStockLevelLevel: 5, status: 'Available', createdAt: '2023-10-01' },
-  { id: '3', medicineName: 'Encrypted Radio RT-1', category: 'Communication', serialNumber: 'RAD-551', quantity: 45, minStockLevelLevel: 10, status: 'Available', createdAt: '2023-09-20' },
-  { id: '5', medicineName: 'Night Vision Goggles Gen 3', category: 'Optics', serialNumber: 'NVG-102', quantity: 8, minStockLevelLevel: 10, status: 'Low Stock', createdAt: '2023-12-01' },
-  { id: '7', medicineName: 'Ballistic Helmet (MICH)', category: 'Personal Gear', serialNumber: 'HLM-003', quantity: 72, minStockLevelLevel: 20, status: 'Available', createdAt: '2023-07-22' },
+  // { id: '1', medicineName: 'M1 Abrams Optic', category: 'Heavy Machinery', serialNumber: 'SN-90210', quantity: 12, lowStockThreshold: 5, status: 'Available', createdAt: '2023-10-01' },
+  // { id: '3', medicineName: 'Encrypted Radio RT-1', category: 'Communication', serialNumber: 'RAD-551', quantity: 45, lowStockThreshold: 10, status: 'Available', createdAt: '2023-09-20' },
+  // { id: '5', medicineName: 'Night Vision Goggles Gen 3', category: 'Optics', serialNumber: 'NVG-102', quantity: 8, lowStockThreshold: 10, status: 'Low Stock', createdAt: '2023-12-01' },
+  // { id: '7', medicineName: 'Ballistic Helmet (MICH)', category: 'Personal Gear', serialNumber: 'HLM-003', quantity: 72, lowStockThreshold: 20, status: 'Available', createdAt: '2023-07-22' },
 ];
 
 export default function pharmacistInventoryPage() {
