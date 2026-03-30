@@ -8,7 +8,7 @@ import { resolveName } from "@/lib/utils";
 export default function CartPage(){
 
 const [products,setProducts] = useState<any[]>([]);
-const [productId,setProductId] = useState("");
+const [medicineId,setMedicineId] = useState("");
 const [quantity,setQuantity] = useState(1);
 const [reason,setReason] = useState("");
 const [deploymentDate,setDeploymentDate] = useState("");
@@ -36,7 +36,7 @@ fetchProducts();
 
 const submitRequest = async()=>{
 
-if(!productId || !reason || !deploymentDate){
+if(!medicineId || !reason || !deploymentDate){
 alert("Please complete the form");
 return;
 }
@@ -48,13 +48,13 @@ alert("pharmacist can request only 1–2 units");
 return;
 }
 
-const product = products.find(p=>p.id===productId);
+const product = products.find(p=>p.id===medicineId);
 
 await addDoc(collection(db,"orders"),{
 
 items:[{
-productId:productId,
-productName:resolveName(product),
+medicineId:medicineId,
+medicineName:resolveName(product),
 quantity
 }],
 
@@ -70,7 +70,7 @@ alert("Medicine request submitted for approval");
 
 /* reset form */
 
-setProductId("");
+setMedicineId("");
 setQuantity(1);
 setReason("");
 setDeploymentDate("");
@@ -99,8 +99,8 @@ Product
 </label>
 
 <select
-value={productId}
-onChange={(e)=>setProductId(e.target.value)}
+value={medicineId}
+onChange={(e)=>setMedicineId(e.target.value)}
 className="border rounded p-2 w-full"
 >
 

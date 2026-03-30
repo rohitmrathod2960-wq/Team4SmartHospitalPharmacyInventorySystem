@@ -9,7 +9,7 @@ import { resolveName } from "@/lib/utils";
 export default function CartPage(){
 
 const [products,setProducts] = useState<any[]>([]);
-const [productId,setProductId] = useState("");
+const [medicineId,setMedicineId] = useState("");
 const [quantity,setQuantity] = useState(1);
 const [reason,setReason] = useState("");
 const [deploymentDate,setDeploymentDate] = useState("");
@@ -38,19 +38,19 @@ fetchProducts();
 
 const submitRequest = async()=>{
 
-if(!productId || !reason || !deploymentDate){
+if(!medicineId || !reason || !deploymentDate){
 alert("Please complete the form");
 return;
 }
 
 /* realistic quantity control */
 
-if(quantity < 1 || quantity > 2){
-alert("pharmacist can request only 1–2 units");
+if(quantity < 1 || quantity > 5){
+alert("pharmacist can request only 1–5 units");
 return;
 }
 
-const product = products.find(p=>p.id===productId);
+const product = products.find(p=>p.id===medicineId);
 
 /* 🔥 GET LOGGED IN USER */
 const auth = getAuth();
@@ -61,16 +61,17 @@ const user = auth.currentUser;
 /* -------------------- */
 
 await addDoc(collection(db,"orders"),{
-
-items:[{
-productId:productId,
-productName:resolveName(product),
-deploymentDate,
-status:"pending",
-userId:user?.uid || "pharmacist", // ✅ dynamic user
-userEmail:user?.email || "unknown",
-createdAt:serverTimestamp() // ✅ better timestamp
-
+  items:[{
+    medicineId:medicineId,
+    medicineName:resolveName(product),
+    quantity: quantity,          // ✅ ADD THIS
+    deploymentDate,
+  }],
+  reason: reason,                // ✅ ADD THIS (OUTSIDE items)
+  status:"pending",
+  userId:user?.uid || "pharmacist",
+  userEmail:user?.email || "unknown",
+  createdAt:serverTimestamp()
 });
 
 
@@ -80,13 +81,13 @@ createdAt:serverTimestamp() // ✅ better timestamp
 
 await addDoc(collection(db,"transactions"),{
 
-productId:productId,
-productName:resolveName(product),
+medicineId:medicineId,
+medicineName:resolveName(product),
 // ✅ IMPORTANT FEATURE
 reason:reason,
 performedBy:user?.email || "pharmacist",
 userId:user?.uid || null,
-ipAddress:"N/A",
+
 
 createdAt:serverTimestamp()
 
@@ -97,7 +98,7 @@ alert("Medicine request submitted for approval");
 
 /* reset form */
 
-setProductId("");
+setMedicineId("");
 setQuantity(1);
 setReason("");
 setDeploymentDate("");
@@ -126,8 +127,8 @@ Product
 </label>
 
 <select
-value={productId}
-onChange={(e)=>setProductId(e.target.value)}
+value={medicineId}
+onChange={(e)=>setMedicineId(e.target.value)}
 className="border rounded p-2 w-full"
 >
 

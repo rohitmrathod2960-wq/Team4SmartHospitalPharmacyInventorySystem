@@ -56,7 +56,7 @@ export default function pharmacistTransactionsPage() {
         result.push({
           id: doc.id,
           type: "ISSUED",
-          item: item.productName,
+          item: item.medicineName,
           status: "completed",
           date: data.issuedDate?.seconds
             ? formatUTCDateTime(new Date(data.issuedDate.seconds * 1000))
@@ -81,7 +81,7 @@ export default function pharmacistTransactionsPage() {
       result.push({
         id: doc.id,
         type: "RETURNED",
-        item: data.productName,
+        item: data.medicineName,
         status: "completed",
         date: data.returnedAt?.seconds
           ? formatUTCDateTime(new Date(data.returnedAt.seconds * 1000))
@@ -106,7 +106,7 @@ export default function pharmacistTransactionsPage() {
         result.push({
           id: doc.id,
           type: "REQUESTED",
-          item: item.productName,
+          item: item.medicineName,
           status: data.status || "pending",
           date: data.createdAt?.seconds
             ? formatUTCDateTime(new Date(data.createdAt.seconds * 1000))

@@ -27,16 +27,14 @@ export function SidebarNav({ role }: SidebarNavProps) {
   const getLinks = () => {
 
     if (role === 'pharmacist') {
+      const base = '/dashboard/staff';
       return [
-        { href: `/dashboard/pharmacist`, label: 'Dashboard', icon: LayoutDashboard },
-        { href: `/dashboard/pharmacist/assigned-medicine`, label: 'Assigned Medicine', icon: Package },
-        { href: `/dashboard/pharmacist/orders`, label: 'My Orders', icon: ClipboardList },
-        { href: `/dashboard/pharmacist/cart`, label: 'Cart', icon: Package },
-        { href: `/dashboard/pharmacist/products`, label: 'Products', icon: Package },
-        
-        
-        { href: `/dashboard/pharmacist/transactions`, label: 'Transactions', icon: ClipboardList },
-       
+        { href: `${base}`, label: 'Dashboard', icon: LayoutDashboard },
+        { href: `${base}/assigned-medicine`, label: 'Assigned Medicine', icon: Package },
+        { href: `${base}/orders`, label: 'My Orders', icon: ClipboardList },
+        { href: `${base}/cart`, label: 'Cart', icon: Package },
+        { href: `${base}/products`, label: 'Products', icon: Package },
+        { href: `${base}/transactions`, label: 'Transactions', icon: ClipboardList },
       ];
     }
 

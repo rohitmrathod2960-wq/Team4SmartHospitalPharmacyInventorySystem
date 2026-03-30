@@ -53,11 +53,12 @@ export default function ManagerDashboard() {
   ];
 
   const chartData = [
-    { name: 'Vehicle', val: 45 },
-    { name: 'Optic', val: 82 },
-    { name: 'Comm', val: 120 },
-    { name: 'Armor', val: 156 },
-    { name: 'UAV', val: 24 },
+    { name: 'Injection', val: 230 },
+    { name: 'Capsule', val: 420 },
+    { name: 'Tablet', val: 600 },
+    { name: 'Liquid', val: 250 },
+    { name: 'Consumables', val: 1400 },
+    { name: 'IV Fluid', val: 180 },
   ];
 
   const COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444'];

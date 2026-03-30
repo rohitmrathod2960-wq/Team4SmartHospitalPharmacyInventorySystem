@@ -40,19 +40,34 @@ export default function AdminCategoryPage() {
   /* FETCH CATEGORIES FROM FIRESTORE */
   /* =============================== */
 
-  const fetchCategories = async () => {
+const fetchCategories = async () => {
 
-    const snap = await getDocs(collection(db, "categories"));
+  const catSnap = await getDocs(collection(db, "categories"));
+  const prodSnap = await getDocs(collection(db, "products"));
 
-    const data = snap.docs.map((docItem, index) => ({
+  const products = prodSnap.docs.map(doc => doc.data());
+
+  const data = catSnap.docs.map((docItem, index) => {
+
+    const cat = docItem.data();
+
+    // 🔥 count products for this category
+    const count = products.filter(
+      (p: any) => p.category === cat.name
+    ).length;
+
+    return {
       id: docItem.id,
       index: index + 1,
-      ...docItem.data()
-    }));
+      name: cat.name,
+      description: cat.description,
+      products: count === 0 ? "N/A" : count,  // ✅ YOUR REQUIREMENT
+      status: cat.status
+    };
+  });
 
-    setCategories(data);
-
-  };
+  setCategories(data);
+};
 
   useEffect(() => {
     fetchCategories();
@@ -69,7 +84,6 @@ export default function AdminCategoryPage() {
     await addDoc(collection(db, "categories"), {
       name: name,
       description: desc,
-      products: 0,
       status: "active",
       createdAt: serverTimestamp()
     });

@@ -14,7 +14,7 @@ export default function DashboardPage() {
     } else if (role === "manager") {
       router.replace("/dashboard/manager");
     } else if (role === "pharmacist") {
-      router.replace("/dashboard/pharmacist");
+      router.replace("/dashboard/staff");
     }
   }, [router]);
 

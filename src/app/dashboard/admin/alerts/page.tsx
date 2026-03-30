@@ -71,7 +71,7 @@ export default function LowStockAlerts() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          productName: product,
+          medicineName: product,
           quantity: quantity,
           supplier: supplier,
         }),

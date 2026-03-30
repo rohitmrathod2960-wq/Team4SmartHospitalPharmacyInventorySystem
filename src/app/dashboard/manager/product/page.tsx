@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { resolveName } from "@/lib/utils";
 import ManagerGuard from "@/components/dashboard/ManagerGuard";
@@ -59,33 +59,36 @@ export default function ProductPage() {
     }
   ];
 
-  const fetchData = async () => {
+  useEffect(() => {
+    let unsubscribeProducts = () => {};
+    let unsubscribeCategories = () => {};
 
-    const prodSnap = await getDocs(collection(db, "products"));
+    const init = async () => {
+      const prodQuery = query(collection(db, "products"), orderBy("createdAt", "desc"));
+      const prodSnap = await getDocs(prodQuery);
 
-    // If no products in Firestore → insert admin products
-    if (prodSnap.empty) {
-
-      for (let p of defaultProducts) {
-        await addDoc(collection(db, "products"), p);
+      if (prodSnap.empty) {
+        for (let p of defaultProducts) {
+          await addDoc(collection(db, "products"), p);
+        }
       }
 
-      const newSnap = await getDocs(collection(db, "products"));
-      setProducts(newSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      unsubscribeProducts = onSnapshot(prodQuery, (snapshot) => {
+        setProducts(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+      });
 
-    } else {
+      const catQuery = query(collection(db, "categories"), orderBy("createdAt", "desc"));
+      unsubscribeCategories = onSnapshot(catQuery, (snapshot) => {
+        setCategories(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+      });
+    };
 
-      setProducts(prodSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+    init();
 
-    }
-
-    const catSnap = await getDocs(collection(db, "categories"));
-    setCategories(catSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-
-  };
-
-  useEffect(() => {
-    fetchData();
+    return () => {
+      unsubscribeProducts();
+      unsubscribeCategories();
+    };
   }, []);
 
   const getCategoryName = (product: any) => {
@@ -93,6 +96,8 @@ export default function ProductPage() {
     if (product.categoryId) {
       const cat = categories.find(c => c.id === product.categoryId);
       if (cat) return cat.name ?? cat.medicineName;
+    }
+
     if (product.category) {
       return product.category;
     }

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, setDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { initializeApp, getApps } from "firebase/app";
 import { createUserWithEmailAndPassword, getAuth, signOut } from "firebase/auth";
-import { firebaseConfig, db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { formatUTCDate } from "@/lib/utils";
 
 type User = {
@@ -62,7 +62,7 @@ return ()=>clearInterval(interval);
 
 
 const getSecondaryAuth = () => {
-  const secondaryApp = getApps().find((app) => app.name === "secondary") || initializeApp(firebaseConfig, "secondary");
+  const secondaryApp = getApps().find((app) => app.name === "secondary") 
   return getAuth(secondaryApp);
 };
 

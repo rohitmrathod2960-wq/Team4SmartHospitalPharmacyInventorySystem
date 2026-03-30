@@ -81,7 +81,11 @@ export default function SignInPage() {
         description: `Welcome back, ${userRole}.`,
       });
 
-      router.push(`/dashboard/${userRole}`);
+      if (userRole === "pharmacist") {
+  router.push("/dashboard/staff");
+} else {
+  router.push(`/dashboard/${userRole}`);
+}
 
     } catch (error: any) {
       toast({
@@ -98,12 +102,12 @@ export default function SignInPage() {
   const roleOptions = [
     { id: 'admin' as Role, label: 'Admin', icon: Shield, color: 'text-blue-600', bg: 'bg-blue-50' },
     { id: 'manager' as Role, label: 'Manager', icon: Briefcase, color: 'text-violet-600', bg: 'bg-violet-50' },
-    { id: 'pharmacist' as Role, label: 'pharmacist', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { id: 'pharmacist' as Role, label: 'Pharmacist', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   ];
 
   return (
 
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background auth-background">
 
       <Card className="w-full max-w-md auth-card-shadow border-none rounded-2xl overflow-hidden">
 

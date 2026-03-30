@@ -28,17 +28,17 @@ import Link from 'next/link';
 
 export default function AdminDashboard() {
   const stats = [
-    { label: 'Total Assets', value: '1,284', icon: Package, colorClass: 'bg-blue-50 text-blue-600', trend: { value: '+12%', positive: true } },
-    { label: 'Active Users', value: '86', icon: Users, colorClass: 'bg-violet-50 text-violet-600', trend: { value: '+4%', positive: true } },
-    { label: 'Low Stock Items', value: '24', icon: AlertTriangle, colorClass: 'bg-orange-50 text-orange-600', trend: { value: '+2%', positive: false } },
+    { label: 'Total Assets', value: '3,080', icon: Package, colorClass: 'bg-blue-50 text-blue-600', trend: { value: '+12%', positive: true } },
+    { label: 'Active Users', value: '6', icon: Users, colorClass: 'bg-violet-50 text-violet-600', trend: { value: '+4%', positive: true } },
+    { label: 'Low Stock Items', value: '1', icon: AlertTriangle, colorClass: 'bg-orange-50 text-orange-600', trend: { value: '+2%', positive: false } },
     { label: 'System Integrity', value: '99.9%', icon: Shield, colorClass: 'bg-emerald-50 text-emerald-600' },
   ];
 
   const criticalStock = [
-    { name: 'M1 Abrams Optic', category: 'Heavy Machinery', serial: 'SN-90210', status: 'Available', qty: 12 },
-    { name: 'Tactical Drone v4', category: 'UAV', serial: 'DR-4421', status: 'Low Stock', qty: 3 },
-    { name: 'Night Vision Gen 3', category: 'Optics', serial: 'NVG-102', status: 'Low Stock', qty: 8 },
-    { name: 'Level IV Plates', category: 'Personal Gear', serial: 'AR-772', status: 'Available', qty: 150 },
+    { name: 'Paracetamol 500mg', category: 'Tablet', serial: 'SN-90210', status: 'Available', qty: 50 },
+    { name: 'Ceftriaxone Injection', category: 'Injection', serial: 'DR-4421', status: 'Available', qty: 150 },
+    { name: 'Glucose Drip', category: 'IV Fluid', serial: 'NVG-102', status: 'Available', qty: 180 },
+    { name: 'Insulin Injection', category: 'Injection', serial: 'AR-772', status: 'Available', qty: 80 },
   ];
 
   return (

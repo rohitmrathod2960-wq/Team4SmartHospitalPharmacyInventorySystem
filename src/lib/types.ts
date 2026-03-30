@@ -15,7 +15,7 @@ export interface Medicine {
   category: string;
   serialNumber: string;
   quantity: number;
-  minStockLevelLevel: number;
+  lowStockThreshold: number;
   status: 'Available' | 'Assigned' | 'Maintenance' | 'Low Stock';
   assignedTo?: string;
   createdAt: string;

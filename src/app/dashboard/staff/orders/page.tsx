@@ -68,11 +68,14 @@ No requests found
 <div key={index} className="mb-2">
 
 <p className="font-semibold">
-{item.productName}
+{item.medicineName}
 </p>
 
 <p className="text-sm">
-Qty: {item.quantity}
+Qty: {item.quantity ?? "N/A"}
+</p>
+<p className="text-sm text-gray-600">
+Reason: {order.reason || "N/A"}
 </p>
 
 {/* NEW FIELD */}

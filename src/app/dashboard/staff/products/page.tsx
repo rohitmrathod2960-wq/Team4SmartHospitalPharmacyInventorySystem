@@ -1,70 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 /* 🔹 Firestore */
-import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { addDoc, collection, onSnapshot, query, orderBy, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function pharmacistProductsPage() {
 
-  const [products] = useState([
-    { id: 1, name: "Standard Issue Radio", category: "Communication", qty: 18 },
-    { id: 2, name: "Tactical Vest (L)", category: "Armor", qty: 12 },
-    { id: 3, name: "NVGs Gen 3", category: "Optics", qty: 4 },
-    { id: 4, name: "Ballistic Helmet", category: "Armor", qty: 12 },
-    { id: 5, name: "Satcom Transceiver", category: "Communication", qty: 2 },
-    { id: 6, name: "Level IV Plates", category: "Armor", qty: 150 },
-    { id: 7, name: "Tactical Drone v4", category: "UAV", qty: 3 },
-    { id: 8, name: "Night Vision Gen 3", category: "Optics", qty: 8 },
-    { id: 9, name: "Field Medical Kit", category: "Medical", qty: 20 },
-    { id: 10, name: "Combat Boots", category: "Gear", qty: 30 },
-  ]);
+  const [products, setProducts] = useState<any[]>([]);
 
-  /* 🔹 Request medicine */
-  const requestItem = async (product: any) => {
+  useEffect(() => {
+    const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
 
-    try {
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        console.warn("No products found in the database.");
+        setProducts([]);
+        return;
+      }
 
-      await addDoc(collection(db, "orders"), {
-
-        items: [
-          {
-            productId: product.id,
-            productName: product.name,
-            quantity: 1,
-          }
-        ],
-
-        status: "pending",
-        userId: "pharmacist", // replace with logged in user later
-        createdAt: Timestamp.now(),
-
+      const productList = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        if (!data.createdAt) {
+          console.error(`Product ${doc.id} is missing 'createdAt' field.`);
+        }
+        return { id: doc.id, ...data };
       });
 
+      setProducts(productList);
+    }, (err) => console.error("Failed to load products", err));
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  const requestItem = async (product: any) => {
+    try {
+      await addDoc(collection(db, "orders"), {
+        items: [
+          {
+            medicineId: product.id,
+            medicineName: product.medicineName || product.name,
+            quantity: 1,
+          },
+        ],
+        status: "pending",
+        userId: "pharmacist",
+        createdAt: serverTimestamp(),
+      });
       alert("Request submitted for approval");
-
     } catch (err) {
-
       console.error(err);
       alert("Error submitting request");
-
     }
-
   };
 
-  /* 🔹 Availability Status */
-  const getStatus = (qty:number) => {
-
-    if(qty === 0) return { label:"Out of Stock", color:"text-red-600" };
-    if(qty <= 5) return { label:"Limited", color:"text-yellow-600" };
-    return { label:"Available", color:"text-green-600" };
-
+  const getStatus = (quantity: number) => {
+    if (quantity === 0) return { label: "Out of Stock", color: "text-red-600" };
+    if (quantity <= 5) return { label: "Limited", color: "text-yellow-600" };
+    return { label: "Available", color: "text-green-600" };
   };
+
+    
 
   return (
 
@@ -122,7 +125,8 @@ export default function pharmacistProductsPage() {
 
                 {products.map((product, idx) => {
 
-                  const status = getStatus(product.qty);
+                  const stockQty = product.quantity || product.qty || 0;
+                  const status = getStatus(stockQty);
 
                   return(
 

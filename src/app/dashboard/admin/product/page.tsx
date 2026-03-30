@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,144 +11,22 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
+import {
+  collection,
+  getDocs,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function AdminProductPage() {
-
-  const [products, setProducts] = useState([
-    {
-     id: 1,
-      sku: "RAD-001",
-      name: "Standard Issue Radio",
-      price: 45000,
-      category: "Communication",
-      supplier: "SecureWave Technologies",
-      qty: 30,
-      lowStock: 5,
-      serialTracked: true,
-      
-    },
-    {
-      id: 2,
-      sku: "VST-201",
-      name: "Tactical Vest (L)",
-      price: 65000,
-      category: "Armor",
-      supplier: "DefTech Industries",
-      qty: 18,
-      lowStock: 6,
-      serialTracked: false,
-      
-    },
-    {
-      id: 3,
-      sku: "NVG-003",
-      name: "NVGs Gen 3",
-      price: 150000,
-      category: "Optics",
-      supplier: "AeroDefense Corp",
-      qty: 23,
-      lowStock: 8,
-      serialTracked: true,
-      image: "",
-    },
-    {
-      id: 4,
-      sku: "BLH-120",
-      name: "Ballistic Helmet",
-      price: 80000,
-      category: "Armor",
-      supplier: "DefTech Industries",
-      qty: 25,
-      lowStock: 5,
-      serialTracked: false,
-      
-    },
-    {
-      id: 5,
-      sku: "SAT-450",
-      name: "Satcom Transceiver",
-      price: 200000,
-      category: "Communication",
-      supplier: "SecureWave Technologies",
-      qty: 17,
-      lowStock: 10,
-      serialTracked: true,
-      
-    },
-    {
-      id: 6,
-      sku: "PLT-444",
-      name: "Level IV Plates",
-      price: 120000,
-      category: "Armor",
-      supplier: "DefTech Industries",
-      qty: 15,
-      lowStock: 5,
-      serialTracked: false,
-      
-    },
-    {
-      id: 7,
-      sku: "DRN-900",
-      name: "Tactical Drone v4",
-      price: 650000,
-      category: "UAV",
-      supplier: "AeroDefense Corp",
-      qty: 26,
-      lowStock: 7,
-      serialTracked: true,
-      
-    },
-    {
-      id: 8,
-      sku: "NVG-004",
-      name: "Night Vision Gen 3",
-      price: 175000,
-      category: "Optics",
-      supplier: "SecureWave Technologies",
-      qty: 20,
-      lowStock: 5,
-      serialTracked: true,
-      
-    },
-    {
-      id: 9,
-      sku: "MED-110",
-      name: "Field Medical Kit",
-      price: 20000,
-      category: "Medical",
-      supplier: "DefTech Industries",
-      qty: 40,
-      lowStock: 10,
-      serialTracked: false,
-      
-    },
-    {
-      id: 10,
-      sku: "GR-900",
-      name: "Combat Boots",
-      price: 30000,
-      category: "Gear",
-      supplier: "DefTech Industries",
-      qty: 50,
-      lowStock: 15,
-      serialTracked: false,
-      
-    },
-    {
-      id: 11,
-      sku: "VEH-778",
-      name: "Combat Tactical Vehicle Kit",
-      price: 950000,
-      category: "Vehicles",
-      supplier: "AeroDefense Corp",
-      qty: 4,
-      lowStock: 5,
-      serialTracked: true,
-      
-    },
-  ]);
-
+  const [products, setProducts] = useState<any[]>([]);
   const [sku, setSku] = useState("");
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -158,35 +36,41 @@ export default function AdminProductPage() {
   const [lowStock, setLowStock] = useState("");
   const [serialTracked, setSerialTracked] = useState(false);
   const [image, setImage] = useState("");
-
   const [editingProduct, setEditingProduct] = useState<any>(null);
-
   const [successMsg, setSuccessMsg] = useState("");
 
-  const handleAddProduct = () => {
+  const fetchProducts = async () => {
+    const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    setProducts(
+      snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }))
+    );
+  };
 
-    if (!sku.trim() || !name.trim()) return;
-
-    const newId = products.length
-      ? Math.max(...products.map(p => p.id)) + 1
-      : 1;
-
-    setProducts([
-      ...products,
-      {
-        id: newId,
-        sku,
-        name,
-        price: Number(price),
-        category,
-        supplier,
-        qty: Number(qty),
-        lowStock: Number(lowStock),
-        serialTracked,
-        image,
+  useEffect(() => {
+    const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        setProducts(
+          snapshot.docs.map((d) => ({
+            id: d.id,
+            ...d.data(),
+          }))
+        );
       },
-    ]);
+      (error) => {
+        console.error("Failed to load products", error);
+      }
+    );
 
+    return () => unsubscribe();
+  }, []);
+
+  const clearForm = () => {
     setSku("");
     setName("");
     setPrice("");
@@ -196,35 +80,81 @@ export default function AdminProductPage() {
     setLowStock("");
     setSerialTracked(false);
     setImage("");
+  };
 
-    setSuccessMsg("Product added successfully");
+  const showSuccess = (message: string) => {
+    setSuccessMsg(message);
     setTimeout(() => setSuccessMsg(""), 2000);
   };
 
-  const handleDeleteProduct = (id: number) => {
+  const handleAddProduct = async () => {
+    if (!sku.trim() || !name.trim()) return;
 
-    setProducts(products.filter(p => p.id !== id));
+    await addDoc(collection(db, "products"), {
+      sku: sku.trim(),
+      medicineName: name.trim(),
+      category: category.trim(),
+      supplier: supplier.trim(),
+      price: Number(price) || 0,
+      quantity: Number(qty) || 0,
+      lowStockThreshold: Number(lowStock) || 0,
+      serialTracked,
+      status: Number(qty) <= Number(lowStock) ? "low_stock" : "in_stock",
+      createdAt: serverTimestamp(),
+      expiryDate: null,
+      image: image.trim(),
+    });
 
-    setSuccessMsg("Product deleted successfully");
-    setTimeout(() => setSuccessMsg(""), 2000);
+    clearForm();
+    showSuccess("Product added successfully");
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    await deleteDoc(doc(db, "products", id));
+    showSuccess("Product deleted successfully");
   };
 
   const openEdit = (product: any) => {
     setEditingProduct(product);
+    setSku(product.sku || "");
+    setName(product.medicineName || product.name || "");
+    setPrice(String(product.price || ""));
+    setCategory(product.category || "");
+    setSupplier(product.supplier || "");
+    setQty(String(product.quantity || ""));
+    setLowStock(String(product.lowStockThreshold || product.lowStock || ""));
+    setSerialTracked(Boolean(product.serialTracked));
+    setImage(product.image || "");
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
+    if (!editingProduct) return;
 
-    setProducts(
-      products.map(p =>
-        p.id === editingProduct.id ? editingProduct : p
-      )
-    );
+    const updated = {
+      sku: sku.trim(),
+      medicineName: name.trim(),
+      category: category.trim(),
+      supplier: supplier.trim(),
+      price: Number(price) || 0,
+      quantity: Number(qty) || 0,
+      lowStockThreshold: Number(lowStock) || 0,
+      serialTracked,
+      status: Number(qty) <= Number(lowStock) ? "low_stock" : "in_stock",
+      expiryDate: null,
+      image: image.trim(),
+      updatedAt: serverTimestamp(),
+    };
+
+    await updateDoc(doc(db, "products", editingProduct.id), updated);
 
     setEditingProduct(null);
+    clearForm();
+    showSuccess("Product updated");
+  };
 
-    setSuccessMsg("Product updated");
-    setTimeout(() => setSuccessMsg(""), 2000);
+  const cancelEdit = () => {
+    setEditingProduct(null);
+    clearForm();
   };
 
   return (
@@ -322,12 +252,12 @@ export default function AdminProductPage() {
                     <TableRow key={product.id} className="hover:bg-muted/30 transition-colors">
 
                       <TableCell>{product.sku}</TableCell>
-                      <TableCell>{product.name}</TableCell>
+                      <TableCell>{product.medicineName || "N/A"}</TableCell>
                       <TableCell>{product.price}</TableCell>
                       <TableCell>{product.category}</TableCell>
                       <TableCell>{product.supplier}</TableCell>
-                      <TableCell>{product.qty}</TableCell>
-                      <TableCell>{product.lowStock}</TableCell>
+                      <TableCell>{product.quantity ?? 0}</TableCell>
+                     <TableCell>{product.lowStockThreshold ?? 0}</TableCell>
                       <TableCell>{product.serialTracked ? "Yes" : "No"}</TableCell>
 
                       <TableCell className="flex gap-2">
@@ -370,7 +300,7 @@ export default function AdminProductPage() {
               Edit Product
             </h2>
 
-            <Input value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct,name:e.target.value})}/>
+            <Input value={editingProduct.medicineName} onChange={e => setEditingProduct({...editingProduct,name:e.target.value})}/>
 
             <Input type="number" value={editingProduct.price} onChange={e => setEditingProduct({...editingProduct,price:Number(e.target.value)})}/>
 
@@ -378,7 +308,7 @@ export default function AdminProductPage() {
 
             <Input value={editingProduct.supplier} onChange={e => setEditingProduct({...editingProduct,supplier:e.target.value})}/>
 
-            <Input type="number" value={editingProduct.lowStock} onChange={e => setEditingProduct({...editingProduct,lowStock:Number(e.target.value)})}/>
+            <Input type="number" value={editingProduct.lowStockThreshold} onChange={e => setEditingProduct({...editingProduct,lowStock:Number(e.target.value)})}/>
 
             <label className="flex items-center gap-2">
               Serial tracked

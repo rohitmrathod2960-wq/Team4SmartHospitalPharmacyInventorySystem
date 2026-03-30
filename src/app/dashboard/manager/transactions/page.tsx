@@ -8,7 +8,7 @@ import ManagerGuard from "@/components/dashboard/ManagerGuard";
 
 type Transaction = {
   id: string;
-  productName: string;
+  medicineName: string;
   quantity: number;
   type: "IN" | "OUT";
   createdAt: any;
@@ -86,7 +86,7 @@ export default function TransactionsPage() {
                     <tr key={t.id} className="border-b hover:bg-gray-50">
 
                       <td className="p-3 font-medium">
-                        {t.productName || "Medicine"}
+                        {t.medicineName || "Medicine"}
                       </td>
 
                       <td>

@@ -36,9 +36,9 @@ if(!order) return;
 
 for(const item of order.items || []){
 
-if(!item.productId) continue;
+if(!item.medicineId) continue;
 
-const productRef = doc(db,"products",String(item.productId));
+const productRef = doc(db,"products",String(item.medicineId));
 const productSnap = await getDoc(productRef);
 
 if(productSnap.exists()){
@@ -53,8 +53,8 @@ quantity:(productData.quantity || 0) - (item.quantity || 1)
 
 await addDoc(collection(db,"transactions"),{
 
-productId:item.productId,
-productName:item.productName,
+medicineId:item.medicineId,
+medicineName:item.medicineName,
 quantity:item.quantity,
 type:"OUT",
 createdAt:new Date()
@@ -142,7 +142,7 @@ order.priority === "High"
 
 <div key={index} className="mb-2">
 
-<p className="font-semibold">{item.productName}</p>
+<p className="font-semibold">{item.medicineName}</p>
 
 <p>Qty: {item.quantity}</p>
 

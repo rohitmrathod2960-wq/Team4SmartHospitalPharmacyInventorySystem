@@ -38,12 +38,23 @@ export default function AlertsPage() {
 
     const snap = await getDocs(collection(db,"products"));
 
-    const products:Product[] = snap.docs.map(d=>({
-      id:d.id,
-      ...(d.data() as Omit<Product,"id">)
-    }));
+    const products:Product[] = snap.docs.map(d=>{
+      const data = d.data();
+      const quantity = data.quantity ?? data.qty ?? 0;
+      const threshold = data.lowStockThreshold ?? data.lowStock ?? 5;
 
-    const filtered = products.filter(p=>{
+      if (!data.name) {
+        console.warn(`Product ${d.id} is missing 'name' field.`);
+      }
+
+      return {
+        id: d.id,
+        name: data.name || "Unknown Product",
+        ...data
+      };
+    });
+
+    const filtered = products.filter(p => {
       const quantity = p.quantity ?? p.qty ?? 0;
       const threshold = p.lowStockThreshold ?? p.lowStock ?? 5;
       return quantity <= threshold;
@@ -117,8 +128,8 @@ Inventory Manager`
 
     await addDoc(collection(db,"restockRequests"),{
 
-      productId:selectedProduct.id,
-      productName:selectedProduct.name,
+      medicineId:selectedProduct.id,
+      medicineName:selectedProduct.name,
       supplierName:selectedSupplier.name,
       supplierEmail:selectedSupplier.email,
       currentStock:quantity,

@@ -33,7 +33,7 @@ import { db } from "@/lib/firebase";
 
 type Transaction = {
   id: string;
-  productName: string;
+  medicineName: string;
   quantity: number;
   type: "IN" | "OUT";
   reason?: string;
@@ -80,7 +80,7 @@ export default function TransactionsPage() {
   /* -------------------------------------------------- */
 
   const filtered = transactions.filter((t) =>
-    (t.productName || "")
+    (t.medicineName || "")
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
@@ -123,7 +123,7 @@ export default function TransactionsPage() {
                 <TableHead className="text-white">Quantity</TableHead>
                 <TableHead className="text-white">Reason</TableHead>
                 <TableHead className="text-white">User</TableHead>
-                <TableHead className="text-white">IP Address</TableHead>
+                {/* <TableHead className="text-white">IP Address</TableHead> */}
                 <TableHead className="text-white">Timestamp</TableHead>
 
               </TableRow>
@@ -173,7 +173,7 @@ export default function TransactionsPage() {
 
                       </TableCell>
 
-                      <TableCell>{t.productName || "-"}</TableCell>
+                      <TableCell>{t.medicineName || "-"}</TableCell>
 
                       <TableCell>
 
@@ -192,8 +192,6 @@ export default function TransactionsPage() {
                         {t.performedBy || "System"}
 
                       </TableCell>
-
-                      <TableCell>{t.ipAddress || "N/A"}</TableCell>
 
                       <TableCell>{date}</TableCell>
 

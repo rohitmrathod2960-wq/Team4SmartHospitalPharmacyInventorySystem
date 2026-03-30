@@ -45,8 +45,8 @@ if(!confirmReturn) return;
 
 await addDoc(collection(db,"returns"),{
 
-productId:item.productId,
-productName:item.productName,
+medicineId:item.medicineId,
+medicineName:item.medicineName,
 serial:item.serial || "N/A",
 returnedBy:"pharmacist",
 returnedAt:new Date(),
@@ -71,8 +71,8 @@ if(!issue) return;
 
 await addDoc(collection(db,"damageReports"),{
 
-productId:item.productId,
-productName:item.productName,
+medicineId:item.medicineId,
+medicineName:item.medicineName,
 serial:item.serial || "N/A",
 reportedBy:"pharmacist",
 issue,
@@ -97,7 +97,7 @@ const issuedDate = item.issuedDate?.seconds
 : "Unknown";
 
 alert(
-`Medicine History — ${item.productName}
+`Medicine History — ${item.medicineName}
 
 ${issuedDate}
 Issued to you
@@ -128,8 +128,8 @@ Assigned Medicine
 <div key={index} className="mb-4">
 
 <p className="font-semibold">
-{item.productName}
-</p>
+{item.medicineName}
+</p>``
 
 <p>Qty: {item.quantity}</p>
 

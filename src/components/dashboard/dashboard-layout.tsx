@@ -50,7 +50,7 @@ export function DashboardLayout({ children, role, title }: DashboardLayoutProps)
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1 font-semibold">{role} Portal</p>
           </div>
         </div>
-        <SidebarNav role={role} />
+        <SidebarNav role={role === 'pharmacist' ? 'pharmacist' : role} />
       </aside>
 
       {/* Main Content Area */}

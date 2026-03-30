@@ -74,8 +74,22 @@ export default function RegisterPage() {
           role,
           createdAt: new Date(),
         });
-      } catch (firestoreError) {
-        console.warn("Firestore fallback during registration:", firestoreError);
+      } catch (firestoreError: any) {
+        console.error("Firestore permission error during registration:", firestoreError);
+        // If settings block users from creating their own profile, the error will be "permission-denied"
+        toast({
+          variant: "destructive",
+          title: "Profile creation failed",
+          description:
+            firestoreError.code === "permission-denied"
+              ? "Firestore security rules disallow writing /users/<uid>. Update your rules to allow the signed-in user to write their own document."
+              : "Could not save profile data. Please try again.",
+        });
+
+        // Optional cleanup: remove the auth user if profile write is mandatory.
+        // await deleteUser(user); // enable after importing deleteUser from firebase/auth if desired.
+
+        return;
       }
 
       toast({
@@ -99,11 +113,11 @@ export default function RegisterPage() {
   const roleOptions = [
     { id: 'admin' as Role, label: 'Admin', icon: Shield, color: 'text-blue-600', bg: 'bg-blue-50' },
     { id: 'manager' as Role, label: 'Manager', icon: Briefcase, color: 'text-violet-600', bg: 'bg-violet-50' },
-    { id: 'pharmacist' as Role, label: 'pharmacist', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { id: 'pharmacist' as Role, label: 'Pharmacist', icon: User, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background auth-background">
       <Card className="w-full max-w-lg auth-card-shadow border-none rounded-2xl overflow-hidden">
         <CardHeader className="text-center pt-8">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">

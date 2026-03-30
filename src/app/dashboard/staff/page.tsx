@@ -123,7 +123,7 @@ useEffect(()=>{
 
       return {
         id:p.id,
-        productName:resolveName(p),
+        medicineName:resolveName(p),
         quantity:quantity,
         threshold:threshold,
         message:"Stock level below threshold. Please notify inventory manager."
@@ -148,7 +148,7 @@ useEffect(()=>{
 
         <div className="lg:col-span-2 space-y-8">
 
-          {/* Assigned medicine */}
+          {/* Assigned medicine
           <section>
 
             <div className="flex items-center justify-between mb-4">
@@ -160,7 +160,7 @@ useEffect(()=>{
               <Button
                 variant="link"
                 className="text-primary font-semibold p-0"
-                onClick={()=>router.push("/dashboard/pharmacist/assigned-medicine")}
+                onClick={()=>router.push("/dashboard/staff/assigned-medicine")}
               >
                 View All
               </Button>
@@ -204,11 +204,11 @@ useEffect(()=>{
                       </div>
 
                       <h3 className="text-lg font-bold mt-4">
-                        {item.productName}
+                        {item.medicineName}
                       </h3>
 
                       <p className="text-xs text-muted-foreground font-mono mt-1">
-                        {item.serial || "SER-"+item.productId}
+                        {item.serial || "SER-"+item.medicineId}
                       </p>
 
                       <div className="mt-4 pt-4 border-t flex items-center justify-between text-xs text-muted-foreground">
@@ -241,7 +241,7 @@ useEffect(()=>{
 
             </div>
 
-          </section>
+          </section> */}
 
           {/* Remaining code unchanged */}
 
@@ -314,7 +314,7 @@ useEffect(()=>{
                   >
 
                     <p className="text-sm font-bold text-red-800">
-                      {alert.productName}
+                      {alert.medicineName}
                     </p>
 
                     <p className="text-xs text-red-700 mt-1">

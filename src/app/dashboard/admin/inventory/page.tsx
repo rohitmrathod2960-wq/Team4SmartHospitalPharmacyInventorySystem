@@ -43,13 +43,13 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 const INITIAL_MEDICINE: Medicine[] = [
-  { id: '1', medicineName: 'M1 Abrams Optic', category: 'Heavy Machinery', serialNumber: 'SN-90210', quantity: 12, minStockLevelLevel: 5, status: 'Available', createdAt: '2023-10-01' },
-  { id: '2', medicineName: 'Tactical Drone v4', category: 'UAV', serialNumber: 'DR-4421', quantity: 3, minStockLevelLevel: 5, status: 'Low Stock', createdAt: '2023-11-15' },
-  { id: '3', medicineName: 'Encrypted Radio RT-1', category: 'Communication', serialNumber: 'RAD-551', quantity: 45, minStockLevelLevel: 10, status: 'Available', createdAt: '2023-09-20' },
-  { id: '4', medicineName: 'Level IV Plates', category: 'Personal Gear', serialNumber: 'AR-772', quantity: 150, minStockLevelLevel: 50, status: 'Available', createdAt: '2023-08-05' },
-  { id: '5', medicineName: 'Night Vision Goggles Gen 3', category: 'Optics', serialNumber: 'NVG-102', quantity: 8, minStockLevelLevel: 10, status: 'Low Stock', createdAt: '2023-12-01' },
-  { id: '6', medicineName: 'Satcom Terminal B1', category: 'Communication', serialNumber: 'SAT-882', quantity: 5, minStockLevelLevel: 2, status: 'Available', createdAt: '2024-01-10' },
-  { id: '7', medicineName: 'Ballistic Helmet (MICH)', category: 'Personal Gear', serialNumber: 'HLM-003', quantity: 72, minStockLevelLevel: 20, status: 'Available', createdAt: '2023-07-22' },
+  { id: '1', medicineName: 'Amoxicillin 250mg', category: 'Tablet', serialNumber: 'SN-90210', quantity: 200, lowStockThreshold: 5, status: 'Available', createdAt: '2023-10-01' },
+  { id: '2', medicineName: 'Aspirin 75mg', category: 'Tablet', serialNumber: 'DR-4421', quantity: 350, lowStockThreshold: 5, status: 'Available', createdAt: '2023-11-15' },
+  { id: '3', medicineName: 'Bandage Roll', category: 'Consumables', serialNumber: 'RAD-551', quantity: 400, lowStockThreshold: 10, status: 'Available', createdAt: '2023-09-20' },
+  { id: '4', medicineName: 'Ceftriaxone Injection', category: 'Injection', serialNumber: 'AR-772', quantity: 150, lowStockThreshold: 50, status: 'Available', createdAt: '2023-08-05' },
+  { id: '5', medicineName: 'Glucose Drip', category: 'IV Fluid', serialNumber: 'NVG-102', quantity: 180, lowStockThreshold: 10, status: 'Available', createdAt: '2023-12-01' },
+  { id: '6', medicineName: 'Hand Sanitizer 500ml', category: 'Liquid', serialNumber: 'SAT-882', quantity: 250, lowStockThreshold: 2, status: 'Available', createdAt: '2024-01-10' },
+  { id: '7', medicineName: 'Ibuprofen 400mg', category: 'Tablet', serialNumber: 'HLM-003', quantity: 200, lowStockThreshold: 20, status: 'Available', createdAt: '2023-07-22' },
 ];
 
 export default function InventoryPage() {
@@ -83,7 +83,7 @@ export default function InventoryPage() {
 
     const updatedMedicine = medicine.map(item => {
       if (item.id === selectedItem.id) {
-        const status = newQty <= item.minStockLevelLevel ? 'Low Stock' : 'Available';
+        const status = newQty <= item.lowStockThreshold ? 'Low Stock' : 'Available';
         return { ...item, quantity: newQty, status: status as any };
       }
       return item;
@@ -170,7 +170,7 @@ export default function InventoryPage() {
         <CardHeader className="border-b bg-muted/30">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle>Asset Table</CardTitle>
+              <CardTitle> Table</CardTitle>
               <CardDescription>Live tracking of all defense inventory items.</CardDescription>
             </div>
             <div className="relative w-full md:w-72">
@@ -206,11 +206,11 @@ export default function InventoryPage() {
                   <TableCell className="text-center">
                     <span className={cn(
                       "font-bold text-lg",
-                      item.quantity <= item.minStockLevelLevel ? "text-orange-600" : ""
+                      item.quantity <= item.lowStockThreshold ? "text-orange-600" : ""
                     )}>
                       {item.quantity}
                     </span>
-                    <div className="text-[10px] text-muted-foreground">Min: {item.minStockLevelLevel}</div>
+                    <div className="text-[10px] text-muted-foreground">Min: {item.lowStockThreshold}</div>
                   </TableCell>
                   <TableCell>
                     <Badge variant={
