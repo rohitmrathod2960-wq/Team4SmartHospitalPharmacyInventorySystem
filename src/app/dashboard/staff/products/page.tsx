@@ -144,8 +144,8 @@ export default function pharmacistProductsPage() {
                     </TableCell>
 
                     <TableCell className="text-gray-700">
-                      {product.name}
-                    </TableCell>
+  {product.medicineName || product.name || "N/A"}
+</TableCell>
 
                     <TableCell className="text-gray-700">
                       {product.category}

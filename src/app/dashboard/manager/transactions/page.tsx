@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { formatUTCDateTime } from "@/lib/utils";
 import ManagerGuard from "@/components/dashboard/ManagerGuard";
@@ -18,26 +18,27 @@ export default function TransactionsPage() {
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  const fetchTransactions = async () => {
+  /* ✅ REAL-TIME FETCH */
+  useEffect(() => {
 
     const q = query(
       collection(db, "transactions"),
       orderBy("createdAt", "desc")
     );
 
-    const snap = await getDocs(q);
+    const unsubscribe = onSnapshot(q, (snapshot) => {
 
-    const data: Transaction[] = snap.docs.map(doc => ({
-      id: doc.id,
-      ...(doc.data() as Omit<Transaction, "id">)
-    }));
+      const data: Transaction[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Transaction, "id">)
+      }));
 
-    setTransactions(data);
+      setTransactions(data);
 
-  };
+    });
 
-  useEffect(() => {
-    fetchTransactions();
+    return () => unsubscribe();
+
   }, []);
 
   return (
@@ -55,13 +56,13 @@ export default function TransactionsPage() {
           <table className="w-full">
 
             <thead className="bg-blue-600 text-white">
-<tr>
-<th className="p-4 text-left w-1/3">Medicine</th>
-<th className="p-4 text-center w-1/4">Movement</th>
-<th className="p-4 text-center w-1/6">Quantity</th>
-<th className="p-4 text-right w-1/4">Date</th>
-</tr>
-</thead>
+              <tr>
+                <th className="p-4 text-left w-1/3">Medicine</th>
+                <th className="p-4 text-center w-1/4">Movement</th>
+                <th className="p-4 text-center w-1/6">Quantity</th>
+                <th className="p-4 text-right w-1/4">Date</th>
+              </tr>
+            </thead>
 
             <tbody>
 
@@ -77,41 +78,40 @@ export default function TransactionsPage() {
 
                 transactions.map(t => {
 
-                  const date = t.createdAt?.toDate
-                    ? formatUTCDateTime(t.createdAt.toDate())
+                  const rawDate = t.createdAt?.toDate?.();
+                  const date = rawDate
+                    ? formatUTCDateTime(rawDate)
                     : "Unknown";
 
                   return (
 
                     <tr key={t.id} className="border-b hover:bg-gray-50">
 
-                      <td className="p-3 font-medium">
-                        {t.medicineName || "Medicine"}
+                      {/* Medicine */}
+                      <td className="p-4 font-medium text-left">
+                        {t.medicineName || "N/A"}
                       </td>
 
-                      <td>
-
+                      {/* Movement */}
+                      <td className="p-4 text-center">
                         {t.type === "IN" ? (
-
                           <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm">
                             Stock In
                           </span>
-
                         ) : (
-
                           <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm">
                             Stock Out
                           </span>
-
                         )}
-
                       </td>
 
-                      <td>
-                        {t.quantity}
+                      {/* Quantity */}
+                      <td className="p-4 text-center font-mono">
+                        {t.quantity ?? 0}
                       </td>
 
-                      <td className="text-sm text-gray-600">
+                      {/* Date */}
+                      <td className="p-4 text-right text-sm text-gray-600">
                         {date}
                       </td>
 

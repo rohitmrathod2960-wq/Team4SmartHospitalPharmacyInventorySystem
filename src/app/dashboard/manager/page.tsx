@@ -47,9 +47,9 @@ export default function ManagerDashboard() {
 
   const stats = [
     { label: 'Inventory Value', value: '$2.4M', icon: TrendingUp, colorClass: 'bg-emerald-50 text-emerald-600' },
-    { label: 'Stock Items', value: '412', icon: Package, colorClass: 'bg-blue-50 text-blue-600' },
-    { label: 'Service Pending', value: '12', icon: Wrench, colorClass: 'bg-orange-50 text-orange-600' },
-    { label: 'Active Teams', value: '8', icon: Users, colorClass: 'bg-violet-50 text-violet-600' },
+    { label: 'Stock Items', value: '12', icon: Package, colorClass: 'bg-blue-50 text-blue-600' },
+    { label: 'Service Pending', value: '2', icon: Wrench, colorClass: 'bg-orange-50 text-orange-600' },
+    { label: 'Active Teams', value: '6', icon: Users, colorClass: 'bg-violet-50 text-violet-600' },
   ];
 
   const chartData = [

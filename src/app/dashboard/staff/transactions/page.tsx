@@ -52,15 +52,15 @@ export default function pharmacistTransactionsPage() {
       const data:any = doc.data();
 
       data.items?.forEach((item:any) => {
-
+   const issuedRaw = data.issuedDate?.toDate?.();
         result.push({
           id: doc.id,
           type: "ISSUED",
           item: item.medicineName,
           status: "completed",
-          date: data.issuedDate?.seconds
-            ? formatUTCDateTime(new Date(data.issuedDate.seconds * 1000))
-            : "Unknown"
+          date: issuedRaw
+  ? formatUTCDateTime(issuedRaw)
+  : "Unknown"
         });
 
       });
@@ -77,15 +77,16 @@ export default function pharmacistTransactionsPage() {
     returnSnap.forEach(doc => {
 
       const data:any = doc.data();
-
+     const returnedRaw = data.returnedAt?.toDate?.();
       result.push({
         id: doc.id,
         type: "RETURNED",
         item: data.medicineName,
         status: "completed",
-        date: data.returnedAt?.seconds
-          ? formatUTCDateTime(new Date(data.returnedAt.seconds * 1000))
-          : "Unknown"
+        
+date: returnedRaw
+  ? formatUTCDateTime(returnedRaw)
+  : "Unknown"
       });
 
     });
@@ -102,15 +103,15 @@ export default function pharmacistTransactionsPage() {
       const data:any = doc.data();
 
       data.items?.forEach((item:any) => {
-
+        const createdRaw = data.createdAt?.toDate?.();
         result.push({
           id: doc.id,
           type: "REQUESTED",
           item: item.medicineName,
           status: data.status || "pending",
-          date: data.createdAt?.seconds
-            ? formatUTCDateTime(new Date(data.createdAt.seconds * 1000))
-            : "Unknown"
+           date: createdRaw
+    ? formatUTCDateTime(createdRaw)
+    : "Unknown"
         });
 
       });
@@ -121,7 +122,7 @@ export default function pharmacistTransactionsPage() {
     /* SORT BY DATE (LATEST FIRST)   */
     /* ----------------------------- */
 
-    result.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // result.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     setActivity(result);
 

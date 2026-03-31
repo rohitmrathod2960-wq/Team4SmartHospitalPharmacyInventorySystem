@@ -38,7 +38,7 @@ type Transaction = {
   type: "IN" | "OUT";
   reason?: string;
   performedBy?: string;
-  ipAddress?: string;
+  // ipAddress?: string;
   createdAt: any;
 };
 

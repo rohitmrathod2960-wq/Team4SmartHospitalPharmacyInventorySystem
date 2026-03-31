@@ -215,6 +215,7 @@ User Management
 placeholder="Full Name"
 value={name}
 onChange={e=>setName(e.target.value)}
+autoComplete="off"
 className="border p-2 rounded"
 />
 
@@ -222,6 +223,7 @@ className="border p-2 rounded"
 placeholder="Email"
 value={email}
 onChange={e=>setEmail(e.target.value)}
+autoComplete="off"
 className="border p-2 rounded"
 />
 
@@ -230,6 +232,7 @@ placeholder="Password"
 type="password"
 value={password}
 onChange={e=>setPassword(e.target.value)}
+autoComplete="new-password"
 className="border p-2 rounded"
 />
 

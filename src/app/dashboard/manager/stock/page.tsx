@@ -9,26 +9,60 @@ import {
 import { db } from "@/lib/firebase";
 import { resolveName } from "@/lib/utils";
 import ManagerGuard from "@/components/dashboard/ManagerGuard";
-
+import { onSnapshot } from "firebase/firestore";
 export default function StockPage() {
 
   const [products, setProducts] = useState<any[]>([]);
+  const [assignedMap, setAssignedMap] = useState<{[key:string]: number}>({});
+ useEffect(() => {
 
-  const fetchProducts = async () => {
-
-    const snap = await getDocs(collection(db, "products"));
-
-    setProducts(
-      snap.docs.map(d => ({
+  const unsubscribeProducts = onSnapshot(
+    collection(db, "products"),
+    (snapshot) => {
+      setProducts(snapshot.docs.map(d => ({
         id: d.id,
         ...d.data()
-      }))
-    );
+      })));
+    }
+  );
+
+  const unsubscribeAssignments = onSnapshot(
+    collection(db, "assignments"),
+    (snapshot) => {
+
+      const map: {[key:string]: number} = {};
+
+      snapshot.forEach(doc => {
+
+        const data:any = doc.data();
+
+        data.items?.forEach((item:any) => {
+
+          const id = item.medicineId;
+
+          if (!id) return;
+
+          map[id] = (map[id] || 0) + (item.quantity || 1);
+
+        });
+
+      });
+
+      setAssignedMap(map);
+
+    }
+  );
+
+  return () => {
+    unsubscribeProducts();
+    unsubscribeAssignments();
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+}, []);
+
+  // useEffect(() => {
+  //   fetchProducts();
+  // }, []);
 
   return (
 
@@ -69,8 +103,9 @@ export default function StockPage() {
 
                 products.map(product => {
 
-                  const available = product.quantity || 0;
-                  const assigned = product.assigned || 0;
+                  const total = product.quantity || 0;
+const assigned = assignedMap[product.id] || 0;
+const available = total - assigned;
 
                   const lowStock =
                     available <= (product.lowStockThreshold || 5);

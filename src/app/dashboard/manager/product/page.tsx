@@ -10,7 +10,7 @@ export default function ProductPage() {
 
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
-
+  const [assignedMap, setAssignedMap] = useState<{[key:string]: number}>({});
   const defaultProducts = [
     {
       name: "Amoxicillin 250mg",
@@ -62,11 +62,35 @@ export default function ProductPage() {
   useEffect(() => {
     let unsubscribeProducts = () => {};
     let unsubscribeCategories = () => {};
-
+    let unsubscribeAssignments = () => {};
     const init = async () => {
       const prodQuery = query(collection(db, "products"), orderBy("createdAt", "desc"));
       const prodSnap = await getDocs(prodQuery);
+      const assignQuery = query(collection(db, "assignments"));
 
+const unsubscribeAssignments = onSnapshot(assignQuery, (snapshot) => {
+
+  const map: {[key:string]: number} = {};
+
+  snapshot.forEach(doc => {
+
+    const data:any = doc.data();
+
+    data.items?.forEach((item:any) => {
+
+      const id = item.medicineId;
+
+      if (!id) return;
+
+      map[id] = (map[id] || 0) + (item.quantity || 1);
+
+    });
+
+  });
+
+  setAssignedMap(map);
+
+});
       if (prodSnap.empty) {
         for (let p of defaultProducts) {
           await addDoc(collection(db, "products"), p);
@@ -88,6 +112,7 @@ export default function ProductPage() {
     return () => {
       unsubscribeProducts();
       unsubscribeCategories();
+      unsubscribeAssignments();
     };
   }, []);
 
@@ -146,7 +171,7 @@ export default function ProductPage() {
                 products.map(p => {
 
                   const available = p.quantity || 0;
-                  const assigned = p.assigned || 0;
+                  const assigned = assignedMap[p.id] || 0;
 
                   const threshold = p.lowStockThreshold || 5;
 
