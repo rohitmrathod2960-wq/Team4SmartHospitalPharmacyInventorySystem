@@ -89,9 +89,32 @@ export default function AdminProductPage() {
     setTimeout(() => setSuccessMsg(""), 2000);
   };
 
-  const handleAddProduct = async () => {
-    if (!sku.trim() || !name.trim()) return;
+ const handleAddProduct = async () => {
+  if (!sku.trim() || !name.trim()) return;
 
+  try {
+
+    const formattedCategory = category.trim().toLowerCase();
+
+    // 🔍 STEP 1: Check if category exists
+    const catSnapshot = await getDocs(collection(db, "categories"));
+
+    const exists = catSnapshot.docs.find(
+      (doc) =>
+        doc.data().name.trim().toLowerCase() === formattedCategory
+    );
+
+    // 🆕 STEP 2: If NOT exists → create category
+    if (!exists) {
+      await addDoc(collection(db, "categories"), {
+        name: category.trim(),
+        description: `${category} items`,
+        status: "active",
+        createdAt: serverTimestamp(),
+      });
+    }
+
+    // 📦 STEP 3: Add product
     await addDoc(collection(db, "products"), {
       sku: sku.trim(),
       medicineName: name.trim(),
@@ -101,14 +124,21 @@ export default function AdminProductPage() {
       quantity: Number(qty) || 0,
       lowStockThreshold: Number(lowStock) || 0,
       serialTracked,
-      status: Number(qty) <= Number(lowStock) ? "low_stock" : "in_stock",
+      status:
+        Number(qty) <= Number(lowStock)
+          ? "low_stock"
+          : "in_stock",
       createdAt: serverTimestamp(),
       expiryDate: expiryDate ? new Date(expiryDate) : null,
     });
 
     clearForm();
     showSuccess("Product added successfully");
-  };
+
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const handleDeleteProduct = async (id: string) => {
     await deleteDoc(doc(db, "products", id));

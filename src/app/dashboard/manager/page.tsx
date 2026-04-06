@@ -1,5 +1,5 @@
 "use client";
-
+import ManagerChatUI from "@/components/ManagerChatUI";
 import { useEffect, useState } from "react";
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { StatCard } from '@/components/dashboard/stat-card';

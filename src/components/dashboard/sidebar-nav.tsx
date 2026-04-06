@@ -35,6 +35,7 @@ export function SidebarNav({ role }: SidebarNavProps) {
         { href: `${base}/cart`, label: 'Cart', icon: Package },
         { href: `${base}/products`, label: 'Products', icon: Package },
         { href: `${base}/transactions`, label: 'Transactions', icon: ClipboardList },
+        { href: `${base}/ai`, label: 'AI Assistant', icon: Wrench },
       ];
     }
 

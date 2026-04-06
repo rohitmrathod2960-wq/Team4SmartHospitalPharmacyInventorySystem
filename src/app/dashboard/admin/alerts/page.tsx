@@ -61,15 +61,20 @@ export default function LowStockAlerts() {
     ...doc.data(),
   }));
 
-  const filtered = products.filter((p: any) => {
-    if (!p.expiryDate) return false;
+ const filtered = products.filter((p: any) => {
+  if (!p.expiryDate) return false;
 
-    const expiry = p.expiryDate?.toDate
-      ? p.expiryDate.toDate()
-      : new Date(p.expiryDate);
+  const expiry = p.expiryDate?.toDate
+    ? p.expiryDate.toDate()
+    : new Date(p.expiryDate);
 
-    return expiry <= next3Days; // includes expired + upcoming
-  });
+  const today = new Date();
+  const diffDays = Math.ceil(
+    (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  return diffDays <= 3; // includes expired + soon
+});
 
   setExpiryData(filtered);
 };

@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import AboutProject from './about-project/page';
 
 export default function Home() {
-  redirect('/auth/signin');
+  return <AboutProject />;
 }

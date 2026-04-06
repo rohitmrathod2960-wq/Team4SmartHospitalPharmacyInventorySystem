@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,216 +13,154 @@ import {
   TableCell,
 } from "@/components/ui/table";
 
-/* ============================= */
-/*         MOCK STOCK DATA       */
-/* ============================= */
-
-const MOCK_STOCK = [
-  {
-    sku: "AMX-250",
-    name: "Amoxicillin 250mg",
-    category: "Capsule",
-    quantity: 200,
-    type: "IN",
-    reason: "Supplier Delivery",
-    performedBy: "Supplier",
-    date: "2026-03-29",
-  },
-  {
-    sku: "ASP-75",
-    name: "Aspirin 75mg",
-    category: "Tablet",
-    quantity: 350,
-    type: "IN",
-    reason: "Issued to Unit",
-    performedBy: "Supplier",
-    date: "2026-03-29",
-  },
-  {
-    sku: "BND-ROL",
-    name: "Bandage Roll",
-    category: "Consumables",
-    quantity: 400,
-    type: "IN",
-    reason: "Supplier Delivery",
-    performedBy: "Supplier",
-    date: "2026-03-29",
-  },
-];
+/* 🔥 FIREBASE IMPORTS */
+import { db } from "@/lib/firebase"; // make sure you have this
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  doc,
+  query,
+  where,
+} from "firebase/firestore";
 
 export default function StockManagementPage() {
 
   const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState("ALL");
-  const [reason, setReason] = useState("");
-  const [performedBy, setPerformedBy] = useState("");
+  const [data, setData] = useState<any[]>([]);
+  const [showPanel, setShowPanel] = useState(false);
 
-  const [data, setData] = useState(MOCK_STOCK);
+  const [form, setForm] = useState({
+    sku: "",
+    name: "",
+    category: "",
+    quantity: "",
+    reason: "",
+    performedBy: "",
+    date: "",
+  });
 
   /* ============================= */
-  /*         STOCK IN FUNCTION     */
+  /*     FETCH FROM FIRESTORE      */
   /* ============================= */
 
-  const handleStockIn = () => {
+  const fetchProducts = async () => {
+    const snapshot = await getDocs(collection(db, "products"));
 
-    if (!search) {
-      alert("Search medicine name first");
+    const products = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    setData(products);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  /* ============================= */
+  /*         STOCK IN LOGIC        */
+  /* ============================= */
+
+  const handleAddStock = async () => {
+
+    if (!form.sku || !form.name || !form.quantity) {
+      alert("Fill required fields");
       return;
     }
 
-    const itemIndex = data.findIndex((item) =>
-      item.name.toLowerCase().includes(search.toLowerCase())
-    );
+    const qty = parseInt(form.quantity);
 
-    if (itemIndex === -1) {
-      alert("Item not found");
-      return;
+    try {
+
+      // 🔍 Check if product exists
+      const q = query(
+        collection(db, "products"),
+        where("sku", "==", form.sku)
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+
+        // ✅ UPDATE EXISTING
+        const existingDoc = snapshot.docs[0];
+        const existingData = existingDoc.data();
+
+        await updateDoc(doc(db, "products", existingDoc.id), {
+          quantity: existingData.quantity + qty,
+        });
+
+      } else {
+
+        // ➕ ADD NEW
+        await addDoc(collection(db, "products"), {
+          sku: form.sku,
+          medicineName: form.name,
+          category: form.category,
+          quantity: qty,
+          createdAt: new Date(),
+        });
+
+      }
+
+      // 🔄 REFRESH DATA
+      fetchProducts();
+
+      // reset form
+      setForm({
+        sku: "",
+        name: "",
+        category: "",
+        quantity: "",
+        reason: "",
+        performedBy: "",
+        date: "",
+      });
+
+      setShowPanel(false);
+
+    } catch (err) {
+      console.error(err);
+      alert("Error updating stock");
     }
-
-    const updated = [...data];
-
-    updated[itemIndex] = {
-      ...updated[itemIndex],
-      quantity: updated[itemIndex].quantity + 1,
-      type: "IN",
-      reason: reason || "Supplier Delivery",
-      performedBy: performedBy || "Admin",
-      date: new Date().toISOString().split("T")[0],
-    };
-
-    setData(updated);
   };
 
   /* ============================= */
-  /*        STOCK OUT FUNCTION     */
+  /*         FILTER SEARCH         */
   /* ============================= */
 
-  const handleStockOut = () => {
-
-    if (!search) {
-      alert("Search medicine name first");
-      return;
-    }
-
-    const itemIndex = data.findIndex((item) =>
-      item.name.toLowerCase().includes(search.toLowerCase())
-    );
-
-    if (itemIndex === -1) {
-      alert("Item not found");
-      return;
-    }
-
-    if (data[itemIndex].quantity <= 0) {
-      alert("Stock cannot go below 0");
-      return;
-    }
-
-    const updated = [...data];
-
-    updated[itemIndex] = {
-      ...updated[itemIndex],
-      quantity: updated[itemIndex].quantity - 1,
-      type: "OUT",
-      reason: reason || "Issued to Unit",
-      performedBy: performedBy || "Warehouse Officer",
-      date: new Date().toISOString().split("T")[0],
-    };
-
-    setData(updated);
-  };
-
-  /* ============================= */
-  /*         FILTER LOGIC          */
-  /* ============================= */
-
-  let filtered = data.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase())
+  const filtered = data.filter((item) =>
+    item.medicineName?.toLowerCase().includes(search.toLowerCase())
   );
-
-  if (filterType !== "ALL") {
-    filtered = filtered.filter((item) => item.type === filterType);
-  }
 
   return (
     <div className="space-y-8 bg-slate-100 min-h-screen p-6">
 
       <Card className="shadow-xl rounded-2xl border-none bg-white">
 
-        <CardHeader className="pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <CardHeader className="flex justify-between items-center">
 
           <CardTitle className="text-2xl font-bold text-blue-800">
             Stock Management
           </CardTitle>
 
-          <div className="flex flex-wrap gap-4 items-end">
+          <div className="flex gap-4">
 
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold mb-1">
-                Search Medicine
-              </label>
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search stock..."
-                className="rounded-lg"
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold mb-1">
-                Transaction Type
-              </label>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="rounded-lg border px-3 py-2"
-              >
-                <option value="ALL">All</option>
-                <option value="IN">Stock IN</option>
-                <option value="OUT">Stock OUT</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold mb-1">
-                Reason
-              </label>
-              <Input
-                placeholder="Supplier delivery / Issued to unit"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                className="rounded-lg"
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold mb-1">
-                Performed By
-              </label>
-              <select
-                value={performedBy}
-                onChange={(e) => setPerformedBy(e.target.value)}
-                className="rounded-lg border px-3 py-2"
-              >
-                <option value="">Select</option>
-                <option value="Admin">Admin</option>
-                <option value="Warehouse Officer">Warehouse Officer</option>
-              </select>
-            </div>
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search medicine..."
+              className="w-64"
+            />
 
             <Button
-              onClick={handleStockIn}
-              className="bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
+              onClick={() => setShowPanel(true)}
+              className="bg-green-600 hover:bg-green-700 text-white"
             >
               + Stock In
-            </Button>
-
-            <Button
-              onClick={handleStockOut}
-              className="bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold"
-            >
-              - Stock Out
             </Button>
 
           </div>
@@ -231,117 +169,119 @@ export default function StockManagementPage() {
 
         <CardContent>
 
-          <div className="overflow-x-auto rounded-xl mt-4">
+          <Table>
 
-            <Table>
+            <TableHeader>
+              <TableRow className="bg-blue-700">
 
-              <TableHeader>
+                <TableHead className="text-white">SKU</TableHead>
+                <TableHead className="text-white">Name</TableHead>
+                <TableHead className="text-white">Category</TableHead>
+                <TableHead className="text-white">Quantity</TableHead>
+                <TableHead className="text-white">Reason</TableHead>
+                <TableHead className="text-white">Performed By</TableHead>
+                <TableHead className="text-white">Date</TableHead>
 
-                <TableRow className="bg-blue-700 hover:bg-blue-700">
+              </TableRow>
+            </TableHeader>
 
-                  <TableHead className="text-white font-bold text-lg">
-                    SKU
-                  </TableHead>
+            <TableBody>
 
-                  <TableHead className="text-white font-bold text-lg">
-                     Name
-                  </TableHead>
+              {filtered.map((item, index) => (
+                <TableRow key={index}>
 
-                  <TableHead className="text-white font-bold text-lg">
-                    Category
-                  </TableHead>
-
-                  <TableHead className="text-white font-bold text-lg">
-                    Quantity
-                  </TableHead>
-
-                  <TableHead className="text-white font-bold text-lg">
-                    Type
-                  </TableHead>
-
-                  <TableHead className="text-white font-bold text-lg">
-                    Reason
-                  </TableHead>
-
-                  <TableHead className="text-white font-bold text-lg">
-                    Performed By
-                  </TableHead>
-
-                  <TableHead className="text-white font-bold text-lg">
-                    Date
-                  </TableHead>
+                  <TableCell>{item.sku}</TableCell>
+                  <TableCell>{item.medicineName}</TableCell>
+                  <TableCell>{item.category}</TableCell>
+                  <TableCell>{item.quantity}</TableCell>
+                  <TableCell>Stock Added</TableCell>
+                  <TableCell>Admin</TableCell>
+                  <TableCell>
+                    {item.createdAt?.seconds
+                      ? new Date(item.createdAt.seconds * 1000).toLocaleDateString()
+                      : "-"}
+                  </TableCell>
 
                 </TableRow>
+              ))}
 
-              </TableHeader>
+            </TableBody>
 
-              <TableBody>
-
-                {filtered.length === 0 ? (
-
-                  <TableRow>
-
-                    <TableCell
-                      colSpan={8}
-                      className="text-center text-muted-foreground"
-                    >
-                      No stock transactions found.
-                    </TableCell>
-
-                  </TableRow>
-
-                ) : (
-
-                  filtered.map((item, index) => (
-
-                    <TableRow
-                      key={index}
-                      className="hover:bg-slate-100 transition-colors"
-                    >
-
-                      <TableCell>{item.sku}</TableCell>
-
-                      <TableCell className="font-medium">
-                        {item.name}
-                      </TableCell>
-
-                      <TableCell>{item.category}</TableCell>
-
-                      <TableCell>{item.quantity}</TableCell>
-
-                      <TableCell>
-                        {item.type === "IN" ? (
-                          <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
-                            IN
-                          </span>
-                        ) : (
-                          <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-semibold">
-                            OUT
-                          </span>
-                        )}
-                      </TableCell>
-
-                      <TableCell>{item.reason}</TableCell>
-
-                      <TableCell>{item.performedBy}</TableCell>
-
-                      <TableCell>{item.date}</TableCell>
-
-                    </TableRow>
-
-                  ))
-
-                )}
-
-              </TableBody>
-
-            </Table>
-
-          </div>
+          </Table>
 
         </CardContent>
 
       </Card>
+
+      {/* ============================= */}
+      {/*       STOCK IN PANEL          */}
+      {/* ============================= */}
+
+      {showPanel && (
+        <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-xl p-6 z-50">
+
+          <h2 className="text-xl font-bold mb-4">Stock In</h2>
+
+          <div className="space-y-3">
+
+            <Input placeholder="SKU"
+              value={form.sku}
+              onChange={(e) => setForm({...form, sku: e.target.value})}
+            />
+
+            <Input placeholder="Name"
+              value={form.name}
+              onChange={(e) => setForm({...form, name: e.target.value})}
+            />
+
+            <Input placeholder="Category"
+              value={form.category}
+              onChange={(e) => setForm({...form, category: e.target.value})}
+            />
+
+            <Input placeholder="Quantity"
+              type="number"
+              value={form.quantity}
+              onChange={(e) => setForm({...form, quantity: e.target.value})}
+            />
+
+            <Input placeholder="Reason"
+              value={form.reason}
+              onChange={(e) => setForm({...form, reason: e.target.value})}
+            />
+
+            <Input placeholder="Performed By"
+              value={form.performedBy}
+              onChange={(e) => setForm({...form, performedBy: e.target.value})}
+            />
+
+            <Input type="date"
+              value={form.date}
+              onChange={(e) => setForm({...form, date: e.target.value})}
+            />
+
+            <div className="flex gap-2 pt-2">
+
+              <Button
+                variant="outline"
+                onClick={() => setShowPanel(false)}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                className="bg-green-600 text-white"
+                onClick={handleAddStock}
+              >
+                Save
+              </Button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
     </div>
   );

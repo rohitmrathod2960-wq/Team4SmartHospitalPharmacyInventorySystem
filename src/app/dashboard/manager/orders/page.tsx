@@ -42,9 +42,32 @@ const productRef = doc(db,"products",String(item.medicineId));
 const productSnap = await getDoc(productRef);
 
 if(productSnap.exists()){
-
 const productData:any = productSnap.data();
 
+if (productData.serialTracked) {
+
+  const serialSnap = await getDocs(collection(db, "serials"));
+
+  const availableSerial = serialSnap.docs.find(
+    (s:any) =>
+      s.data().productId === item.medicineId &&
+      s.data().status === "available"
+  );
+
+  if (availableSerial) {
+
+    // 🔥 assign serial
+    await updateDoc(doc(db, "serials", availableSerial.id), {
+      status: "assigned",
+      assignedTo: order.userId
+    });
+
+    // 🔥 attach serial to item
+    item.serial = availableSerial.data().serial;
+
+  }
+
+}
 await updateDoc(productRef,{
 quantity:(productData.quantity || 0) - (item.quantity || 1)
 });

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { onSnapshot } from "firebase/firestore";
 import {
   Table,
   TableHeader,
@@ -53,7 +54,9 @@ const fetchCategories = async () => {
 
     // 🔥 count products for this category
     const count = products.filter(
-      (p: any) => p.category === cat.name
+      (p: any) =>
+  p.category?.trim().toLowerCase() ===
+  cat.name?.trim().toLowerCase()
     ).length;
 
     return {
@@ -70,8 +73,17 @@ const fetchCategories = async () => {
 };
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+
+  const unsubscribe = onSnapshot(
+    collection(db, "categories"),
+    () => {
+      fetchCategories();
+    }
+  );
+
+  return () => unsubscribe();
+
+}, []);
 
   /* =============================== */
   /* ADD CATEGORY                    */

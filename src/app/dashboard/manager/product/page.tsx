@@ -11,6 +11,7 @@ export default function ProductPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [assignedMap, setAssignedMap] = useState<{[key:string]: number}>({});
+
   const defaultProducts = [
     {
       name: "Amoxicillin 250mg",
@@ -26,71 +27,60 @@ export default function ProductPage() {
       supplier: "Vikram Shetty",
       expiryDate: new Date("2027-03-18T00:00:00Z"),
       createdAt: new Date()
-    },
-    {
-      name: "Paracetamol 500mg",
-      medicineName: "Paracetamol 500mg",
-      category: "Tablet",
-      categoryId: "cat_tablet",
-      sku: "PCM-500",
-      price: 20,
-      quantity: 150,
-      lowStockThreshold: 25,
-      serialTracked: false,
-      status: "in_stock",
-      supplier: "Vikram Shetty",
-      expiryDate: new Date("2027-08-30T00:00:00Z"),
-      createdAt: new Date()
-    },
-    {
-      name: "Aspirin 75mg",
-      medicineName: "Aspirin 75mg",
-      category: "Tablet",
-      categoryId: "cat_tablet",
-      sku: "ASP-075",
-      price: 35,
-      quantity: 120,
-      lowStockThreshold: 30,
-      serialTracked: false,
-      status: "in_stock",
-      supplier: "Vikram Shetty",
-      expiryDate: new Date("2028-02-03T00:00:00Z"),
-      createdAt: new Date()
     }
   ];
+
+  // ✅ SERIAL GENERATION FUNCTION (ADDED HERE)
+  const generateSerials = async (productId: string, name: string) => {
+
+    const count = prompt("Enter number of serials");
+    if (!count) return;
+
+    const prefix = name.slice(0, 2).toUpperCase();
+
+    for (let i = 1; i <= Number(count); i++) {
+      await addDoc(collection(db, "serials"), {
+        productId,
+        serial: `${prefix}-${i.toString().padStart(3, "0")}`,
+        status: "available",
+        assignedTo: null
+      });
+    }
+
+    alert("Serials Generated");
+  };
 
   useEffect(() => {
     let unsubscribeProducts = () => {};
     let unsubscribeCategories = () => {};
     let unsubscribeAssignments = () => {};
+
     const init = async () => {
+
       const prodQuery = query(collection(db, "products"), orderBy("createdAt", "desc"));
       const prodSnap = await getDocs(prodQuery);
+
       const assignQuery = query(collection(db, "assignments"));
 
-const unsubscribeAssignments = onSnapshot(assignQuery, (snapshot) => {
+      unsubscribeAssignments = onSnapshot(assignQuery, (snapshot) => {
 
-  const map: {[key:string]: number} = {};
+        const map: {[key:string]: number} = {};
 
-  snapshot.forEach(doc => {
+        snapshot.forEach(doc => {
+          const data:any = doc.data();
 
-    const data:any = doc.data();
+          data.items?.forEach((item:any) => {
+            const id = item.medicineId;
+            if (!id) return;
+            map[id] = (map[id] || 0) + (item.quantity || 1);
+          });
 
-    data.items?.forEach((item:any) => {
+        });
 
-      const id = item.medicineId;
+        setAssignedMap(map);
 
-      if (!id) return;
+      });
 
-      map[id] = (map[id] || 0) + (item.quantity || 1);
-
-    });
-
-  });
-
-  setAssignedMap(map);
-
-});
       if (prodSnap.empty) {
         for (let p of defaultProducts) {
           await addDoc(collection(db, "products"), p);
@@ -105,6 +95,7 @@ const unsubscribeAssignments = onSnapshot(assignQuery, (snapshot) => {
       unsubscribeCategories = onSnapshot(catQuery, (snapshot) => {
         setCategories(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
       });
+
     };
 
     init();
@@ -114,6 +105,7 @@ const unsubscribeAssignments = onSnapshot(assignQuery, (snapshot) => {
       unsubscribeCategories();
       unsubscribeAssignments();
     };
+
   }, []);
 
   const getCategoryName = (product: any) => {
@@ -145,15 +137,15 @@ const unsubscribeAssignments = onSnapshot(assignQuery, (snapshot) => {
           <table className="w-full">
 
             <thead className="bg-blue-600 text-white">
-
               <tr>
                 <th className="p-3 text-left">Medicine</th>
                 <th className="text-left">Category</th>
                 <th className="text-center">Available</th>
                 <th className="text-center">Assigned</th>
                 <th className="text-center">Status</th>
+                <th className="text-center">Serial</th>
+                <th className="text-center">Action</th>
               </tr>
-
             </thead>
 
             <tbody>
@@ -161,7 +153,7 @@ const unsubscribeAssignments = onSnapshot(assignQuery, (snapshot) => {
               {products.length === 0 ? (
 
                 <tr>
-                  <td colSpan={5} className="text-center p-6 text-gray-500">
+                  <td colSpan={7} className="text-center p-6 text-gray-500">
                     No medicine available.
                   </td>
                 </tr>
@@ -172,17 +164,12 @@ const unsubscribeAssignments = onSnapshot(assignQuery, (snapshot) => {
 
                   const available = p.quantity || 0;
                   const assigned = assignedMap[p.id] || 0;
-
                   const threshold = p.lowStockThreshold || 5;
 
                   let status = "Available";
 
-                  if (available === 0) {
-                    status = "Out of Stock";
-                  }
-                  else if (available <= threshold) {
-                    status = "Low Stock";
-                  }
+                  if (available === 0) status = "Out of Stock";
+                  else if (available <= threshold) status = "Low Stock";
 
                   return (
 
@@ -205,7 +192,6 @@ const unsubscribeAssignments = onSnapshot(assignQuery, (snapshot) => {
                       </td>
 
                       <td className="text-center">
-
                         <span
                           className={
                             status === "Available"
@@ -217,7 +203,21 @@ const unsubscribeAssignments = onSnapshot(assignQuery, (snapshot) => {
                         >
                           {status}
                         </span>
+                      </td>
 
+                      <td className="text-center">
+                        {p.serialTracked ? "Yes" : "No"}
+                      </td>
+
+                      <td className="text-center">
+                        {p.serialTracked && (
+                          <button
+                            className="bg-blue-500 text-white px-2 py-1 rounded"
+                            onClick={() => generateSerials(p.id, p.medicineName)}
+                          >
+                            Generate
+                          </button>
+                        )}
                       </td>
 
                     </tr>
